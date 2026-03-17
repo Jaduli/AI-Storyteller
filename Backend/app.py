@@ -1,6 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import json
+import requests
+import re
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -8,7 +14,7 @@ CORS(app)
 BASE_DIR = "files"
 os.makedirs(BASE_DIR, exist_ok=True)
 
-@app.route('/load', methods=['GET'])
+@app.route('/api/load', methods=['GET'])
 def load_file():
     filename = request.args.get('filename')
     path = os.path.join(BASE_DIR, filename)
@@ -22,7 +28,7 @@ def load_file():
     return jsonify({"content": content})
 
 
-@app.route('/save', methods=['POST'])
+@app.route('/api/save', methods=['POST'])
 def save_file():
     data = request.json
     filename = data.get('filename')
@@ -35,6 +41,52 @@ def save_file():
 
     return jsonify({"message": "File saved successfully"})
 
+@app.route('/api/continue', methods=['POST'])
+def continue_story():
+    # Validate request JSON
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Missing or invalid JSON body."}), 400
+
+    content = data.get('content')
+    model = 'llama-3.1-8b-instant'
+
+    if not content:
+        return jsonify({"error": "Missing 'content' in request body."}), 400
+
+    # Validate environment configuration
+    api_url = os.getenv("API_URL")
+    api_key = os.getenv("API_KEY")
+    if not api_url or not api_key:
+        return jsonify({"error": "Server misconfiguration: API_URL or API_KEY not set."}), 500
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are an AI storyteller. Continue the story from where it left off based on the provided content."},
+            {"role": "user", "content": content}
+        ],
+        "max_tokens": 200,
+        "temperature": 0.7
+    }
+
+    # Call external AI API with error handling
+    response = requests.post(api_url, headers=headers, json=payload)
+
+    try:
+        result = response.json()
+    except Exception:
+        return jsonify({
+            "error": "Invalid response from AI API.",
+            "raw": response.text
+        }), 500
+
+    continued_content = result["choices"][0]["message"]["content"]
+
+    return jsonify({"continued_content": continued_content})
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
