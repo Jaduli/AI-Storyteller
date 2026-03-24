@@ -18,7 +18,7 @@ export default {
       <input
         type="text"
         v-model="model"
-        placeholder="Enter Model Name"
+        placeholder="llama-3.1-8b-instant"
       />
     </div>
     <StoryEditor :model="model" />

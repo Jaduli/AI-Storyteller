@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+# Start Ollama in background
+ollama serve &
+
+# Wait until API is ready
+until curl -s http://localhost:11434 >/dev/null; do
+  echo "Waiting for Ollama..."
+  sleep 2
+done
+
+echo "Ollama is ready"
+
+# Pull model (only if missing)
+ollama pull tinyllama
+
+echo "Model ready"
+
+wait

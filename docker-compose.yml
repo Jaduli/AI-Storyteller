@@ -13,3 +13,14 @@ services:
       - "5173:80"
     depends_on:
       - backend
+
+  ai:
+    build: ./ai
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:

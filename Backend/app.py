@@ -5,6 +5,11 @@ import requests
 import re
 from dotenv import load_dotenv
 import os
+from default_prompts import GENERATION_SYS_PROMPT, SUMMARIZATION_SYS_PROMPT
+import utils
+
+# Local Ollama model API endpoint
+OLLAMA_URL = "http://ai:11434/api/chat"
 
 load_dotenv()
 
@@ -49,24 +54,31 @@ def continue_story():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     content = data.get('content')
+    summary = data.get('summary', '')
     model = 'llama-3.1-8b-instant'
 
-    if not content:
-        return jsonify({"error": "Missing 'content' in request body."}), 400
+    if not content or content.strip() == "":
+        return jsonify({"error": "Empty content."}), 400
+    
+    # Trim content to save context length
+    trimmed_content = utils.trim_content_to_length(content)
 
     # Validate environment configuration
     api_url = os.getenv("API_URL")
     api_key = os.getenv("API_KEY")
     if not api_url or not api_key:
-        return jsonify({"error": "Server misconfiguration: API_URL or API_KEY not set."}), 500
+        return jsonify({"error": "API_URL or API_KEY not set."}), 500
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     payload = {
         "model": model,
         "messages": [
-            {"role": "system", "content": "You are an AI storyteller. Continue the story from where it left off based on the provided content."},
-            {"role": "user", "content": content}
+            {"role": "system", "content": GENERATION_SYS_PROMPT},
+            {
+                "role": "user",
+                "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"
+            }
         ],
         "max_tokens": 200,
         "temperature": 0.7
@@ -85,8 +97,45 @@ def continue_story():
 
     continued_content = result["choices"][0]["message"]["content"]
 
-    return jsonify({"continued_content": continued_content})
+    trimmed = utils.trim_incomplete_sentences(continued_content)
 
+    return jsonify({"continued_content": trimmed})
+
+@app.route('/api/summarize', methods=['POST'])
+def summarize():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Missing or invalid JSON body."}), 400
+
+    content = data.get('content')
+    if not content or content.strip() == "":
+        return jsonify({"error": "Empty content."}), 400
+    
+    trimmed_content = utils.trim_content_to_length(content)
+    
+    response = requests.post(OLLAMA_URL, json={
+        "model": "tinyllama",
+        "messages": [
+            {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
+            {"role": "user", "content": trimmed_content}
+        ],
+        "options": {
+            "num_predict": 200,
+            "temperature": 0.7
+        },
+        "stream": False
+    })
+
+    summary = response.json().get("message", {}).get("content", "").strip()
+
+    trimmed = utils.trim_incomplete_sentences(summary)
+
+    if response.status_code == 200:
+        return {
+            "summary": trimmed
+        }
+    else:
+        return {"error": response.text}, response.status_code
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
