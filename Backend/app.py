@@ -54,7 +54,7 @@ def continue_story():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     content = data.get('content')
-    summary = data.get('summary', '')
+    summary = data.get('summary', 'None.')
     model = 'llama-3.1-8b-instant'
 
     if not content or content.strip() == "":
@@ -111,13 +111,15 @@ def summarize():
     if not content or content.strip() == "":
         return jsonify({"error": "Empty content."}), 400
     
+    summary = data.get('summary', 'None.')
+    
     trimmed_content = utils.trim_content_to_length(content)
     
     response = requests.post(OLLAMA_URL, json={
         "model": "tinyllama",
         "messages": [
             {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
-            {"role": "user", "content": trimmed_content}
+            {"role": "user", "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"}
         ],
         "options": {
             "num_predict": 200,

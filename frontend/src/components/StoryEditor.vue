@@ -8,12 +8,17 @@ export default {
       content: '',
       summary: '',
       status_message: '',
-      action_counter: 0
+      action_counter: 0,
+      context_length: 300 // Number of words to send as context for story generation
     }
   },
   methods: {
     async continueStory() {
       try {
+        // Trim content to last context_length words
+        const words = this.content.split(/\s+/);
+        const recent_story = words.slice(-this.context_length).join(' ');
+
         this.status_message = 'Continuing story...';
         const res = await fetch('http://localhost:5000/api/continue', {
           method: 'POST',
@@ -21,7 +26,7 @@ export default {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content: this.content,
+            content: recent_story,
             summary: this.summary,
             model: this.model
           })
@@ -36,9 +41,11 @@ export default {
         this.content = this.content + ' ' + (data.continued_content || '');
         this.status_message = '';
         this.action_counter++;
-        if (this.action_counter >= 5) {
+        if (this.action_counter >= 3) {
+          this.status_message = 'Summarizing story...';
           await this.summarizeStory();
           this.action_counter = 0; // reset counter
+          this.status_message = 'Story summarized.';
         }
       } catch (err) {
         this.status_message = 'Error continuing story: ' + err.error;
@@ -46,13 +53,18 @@ export default {
     },
     async summarizeStory() {
       try {
+        // Trim content to last context_length words
+        const words = this.content.split(/\s+/);
+        const recent_story = words.slice(-this.context_length).join(' ');
+
         const res = await fetch('http://localhost:5000/api/summarize', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content: this.content
+            content: recent_story,
+            summary: this.summary
           })
         });
         const data = await res.json();
@@ -89,6 +101,9 @@ export default {
     cols="80" 
     placeholder="Summary will appear here. Summary will be used as context in story generation.">
     </textarea>
+    <div>
+      <button @click="summarizeStory">Summarize Story</button>
+    </div>
   </div>
 </template>
 

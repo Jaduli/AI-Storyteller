@@ -6,7 +6,7 @@ def trim_incomplete_sentences(text):
         return text[:last_period_index + 1]
     return text
 
-def trim_content_to_length(text, max_length=200):
+def trim_content_to_length(text, max_length=300):
     if len(text) <= max_length:
         return text
 
