@@ -38,7 +38,14 @@ export default {
           return;
         }
 
-        this.content = this.content + ' ' + (data.continued_content || '');
+        this.content = this.content + '\n\n' + (data.continued_content || '');
+        
+        // Scroll to bottom to show new content
+        this.$nextTick(() => {
+          const el = this.$refs.storyBox;
+          el.scrollTop = el.scrollHeight;
+        });
+
         this.status_message = '';
         this.action_counter++;
         if (this.action_counter >= 3) {
@@ -84,7 +91,9 @@ export default {
 
 <template>
   <div class="container">
-    <textarea v-model="content" 
+    <textarea 
+    ref="storyBox"
+    v-model="content" 
     rows="15" 
     cols="80" 
     placeholder="Paste or write story text here"></textarea>
