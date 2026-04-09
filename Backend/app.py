@@ -85,15 +85,11 @@ def continue_story():
     }
 
     # Call external AI API with error handling
-    response = requests.post(api_url, headers=headers, json=payload)
+    result, error = utils.call_ai_api(api_url, headers, payload)
 
-    try:
-        result = response.json()
-    except Exception:
-        return jsonify({
-            "error": "Invalid response from AI API.",
-            "raw": response.text
-        }), 500
+    if error:
+        message, status = error
+        return jsonify({"error": message}), status
 
     continued_content = result["choices"][0]["message"]["content"]
 
@@ -111,33 +107,70 @@ def summarize():
     if not content or content.strip() == "":
         return jsonify({"error": "Empty content."}), 400
     
+    mode = data.get('mode', 'cloud')  # Default to cloud summarization
+    
     summary = data.get('summary', 'None.')
+
+    model = 'llama-3.1-8b-instant'
     
     trimmed_content = utils.trim_content_to_length(content)
-    
-    response = requests.post(OLLAMA_URL, json={
-        "model": "tinyllama",
-        "messages": [
-            {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
-            {"role": "user", "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"}
-        ],
-        "options": {
-            "num_predict": 200,
+    new_summary = ""
+
+    if mode == 'cloud':
+        # Validate environment configuration
+        api_url = os.getenv("API_URL")
+        api_key = os.getenv("API_KEY")
+        
+        if not api_url or not api_key:
+            return jsonify({"error": "API_URL or API_KEY not set."}), 500
+
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
+                {
+                    "role": "user",
+                    "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"
+                }
+            ],
+            "max_tokens": 200,
             "temperature": 0.7
-        },
-        "stream": False
-    })
-
-    summary = response.json().get("message", {}).get("content", "").strip()
-
-    trimmed = utils.trim_incomplete_sentences(summary)
-
-    if response.status_code == 200:
-        return {
-            "summary": trimmed
         }
-    else:
-        return {"error": response.text}, response.status_code
+
+        # Call external AI API with error handling
+        result, error = utils.call_ai_api(api_url, headers, payload)
+
+        if error:
+            message, status = error
+            return jsonify({"error": message}), status
+
+        new_summary = result["choices"][0]["message"]["content"]
+
+    else:    
+        response = requests.post(OLLAMA_URL, json={
+            "model": "tinyllama",
+            "messages": [
+                {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
+                {"role": "user", "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"}
+            ],
+            "options": {
+                "num_predict": 200,
+                "temperature": 0.7
+            },
+            "stream": False
+        })
+
+        if response.status_code == 200:
+            new_summary = response.json().get("message", {}).get("content", "").strip()
+        else:
+            return {"error": response.text}, response.status_code
+
+    trimmed = utils.trim_incomplete_sentences(new_summary)
+
+    return jsonify({"summary": trimmed})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

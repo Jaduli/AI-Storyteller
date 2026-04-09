@@ -34,7 +34,7 @@ export default {
         const data = await res.json();
 
         if (data.error) {
-          this.status_message = 'Error: ' + data.error;
+          this.status_message = 'Error continuing story: ' + data.error;
           return;
         }
 
@@ -42,16 +42,15 @@ export default {
         this.status_message = '';
         this.action_counter++;
         if (this.action_counter >= 3) {
-          this.status_message = 'Summarizing story...';
           await this.summarizeStory();
           this.action_counter = 0; // reset counter
-          this.status_message = 'Story summarized.';
         }
       } catch (err) {
         this.status_message = 'Error continuing story: ' + err.error;
       }
     },
     async summarizeStory() {
+      this.status_message = 'Summarizing story...';
       try {
         // Trim content to last context_length words
         const words = this.content.split(/\s+/);
@@ -70,11 +69,11 @@ export default {
         const data = await res.json();
 
         if (data.error) {
-          this.status_message = 'Error: ' + data.error;
+          this.status_message = 'Error summarizing story: ' + data.error;
           return;
         }
-
         this.summary = data.summary || '';
+        this.status_message = 'Story summarized.';
       } catch (err) {
         this.status_message = 'Error summarizing story: ' + err.error;
       }
