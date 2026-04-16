@@ -13,11 +13,12 @@ export default {
     return {
       content: '',
       summary: '',
+      plot_essentials: '',
       status_message: '',
       save_action_counter: 0,
       summarize_action_counter: 0,
       filename: '',
-      show_summary: false
+      active_tab: 'editor'
     }
   },
   methods: {
@@ -30,8 +31,12 @@ export default {
     },
     async continueStory() {
       try {
-        // Trim content to last context_length for better performance
-        const recent_story = this.trimToTokenApprox(this.content, this.context_length);
+        const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
+
+        // Use half of the context length for plot essentials + summary and half for recent story content
+        const trimmed_context = this.trimToTokenApprox(context, this.context_length / 2);
+        const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
+        const full_context = 'Context:\n' + trimmed_context + '\n\n Recent Story:\n' + recent_story;
 
         this.status_message = 'Continuing story...';
         const res = await fetch('http://localhost:5000/api/continue', {
@@ -40,8 +45,7 @@ export default {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content: recent_story,
-            summary: this.summary,
+            content: full_context,
             model: this.model
           })
         });
@@ -87,9 +91,10 @@ export default {
     async summarizeStory() {
       this.status_message = 'Summarizing story...';
       try {
-        // Trim content to last context_length words
-        const words = this.content.split(/\s+/);
-        const recent_story = words.slice(-this.context_length).join(' ');
+        // Use half of the context length for summary and half for recent story content
+        const trimmed_summary = this.trimToTokenApprox(this.summary, this.context_length / 2);
+        const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
+        const full_context = 'Summary:\n' + trimmed_summary + '\n\nRecent Story:\n' + recent_story;
 
         const res = await fetch('http://localhost:5000/api/summarize', {
           method: 'POST',
@@ -97,8 +102,7 @@ export default {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content: recent_story,
-            summary: this.summary
+            content: full_context
           })
         });
         const data = await res.json();
@@ -130,7 +134,8 @@ export default {
           body: JSON.stringify({
             filename,
             content: this.content,
-            summary: this.summary
+            summary: this.summary,
+            plot_essentials: this.plot_essentials
           })
         });
         const data = await res.json();
@@ -161,7 +166,8 @@ export default {
         }
         this.content = data.content || '';
         this.summary = data.summary || '';
-        this.status_message = 'Story loaded.';
+        this.plot_essentials = data.plot_essentials || '';
+        this.status_message = 'Story loaded successfully.';
       } catch (err) {
         this.status_message = 'Error loading story: ' + err.error;
       }
@@ -171,41 +177,104 @@ export default {
 </script>
 
 <template>
-  <div class="container">
-    <h2>Story Editor</h2>
-    <textarea 
-    ref="storyBox"
-    v-model="content" 
-    rows="15" 
-    cols="80" 
-    placeholder="Paste or write story text here"></textarea>
-    <div>
-      <button @click="continueStory">Continue Story</button>
-    </div>
-    <p>{{ status_message}}</p>
+  <div class="tab-header">
+  <button 
+    :class="{ active: active_tab === 'editor' }"
+    @click="active_tab = 'editor'"
+  >
+    Editor
+  </button>
+
+  <button 
+    :class="{ active: active_tab === 'summary' }"
+    @click="active_tab = 'summary'"
+  >
+    Summary
+  </button>
+
+  <button 
+    :class="{ active: active_tab === 'plot' }"
+    @click="active_tab = 'plot'"
+  >
+    Plot
+  </button>
   </div>
+  <div class="tab-content">
+    <div class="container" v-show="active_tab === 'editor'">
+      <h2>Story Editor</h2>
+      <textarea 
+      ref="storyBox"
+      v-model="content" 
+      rows="15" 
+      cols="80" 
+      placeholder="Paste or write story text here"></textarea>
+      <div>
+        <button @click="continueStory">Continue Story</button>
+      </div>
+    </div>
+    <div class="container" v-show="active_tab === 'summary'">
+      <h2>Summary</h2>
+      <textarea v-model="summary" 
+      rows="15" 
+      cols="80" 
+      placeholder="Summary will appear here. Summary will be used as context in story generation.">
+      </textarea>
+      <div>
+        <button @click="summarizeStory">Summarize Story</button>
+      </div>
+    </div>
+    <div class="container" v-show="active_tab === 'plot'">
+      <h2>Plot Essentials</h2>
+      <textarea v-model="plot_essentials" 
+      rows="15" 
+      cols="80" 
+      placeholder="Key plot points, character details, or world-building elements. This will be used as context in story generation.">
+      </textarea>
+    </div>
+  </div>
+  <p class="status">{{ status_message}}</p>
   <div class="container">
     <h2>Load/Save Story</h2>
     <input v-model="filename" placeholder="Enter filename" />
     <button @click="loadStory">Load Story</button>
     <button @click="saveStory">Save Story</button>
   </div>
-  <button @click="show_summary = !show_summary">
-    {{ show_summary ? 'Hide Summary' : 'Show Summary' }}
-  </button>
-  <div class="container" v-if="show_summary">
-    <h3>Summary</h3>
-    <textarea v-model="summary" 
-    rows="5" 
-    cols="80" 
-    placeholder="Summary will appear here. Summary will be used as context in story generation.">
-    </textarea>
-    <div>
-      <button @click="summarizeStory">Summarize Story</button>
-    </div>
-  </div>
 </template>
 
 <style scoped>
+.status {
+  height: 30px;
+  background: #08060d;
+  padding: 5px;
+}
 
+textarea {
+  resize: none;
+}
+
+.tab-content {
+  position: relative;
+  min-height: 285px;
+  padding: 10px;
+  padding-top: 10px;
+}
+
+.tab-content .container {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+.tab-header button {
+  padding: 8px 16px;
+  border: none;
+  background: #08060d;
+  cursor: pointer;
+}
+
+.tab-header button.active {
+  background: #aa3bff;
+  color: white;
+  font-weight: bold;
+}
 </style>

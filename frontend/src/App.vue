@@ -22,7 +22,7 @@ export default {
 <template>
   <div>
     <h1>AI Storyteller</h1>
-    <StoryEditor
+    <StoryEditor class="story-editor"
       :model="model"
       :context_length="context_length"
       :auto_save="auto_save"
@@ -54,5 +54,7 @@ export default {
 </template>
 
 <style>
-
+.story-editor {
+  margin-top: 20px;
+}
 </style>

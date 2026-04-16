@@ -35,11 +35,12 @@ def load_file():
             data = json.load(f)
             content = data.get("content", "")
             summary = data.get("summary", "None.")
+            plot_essentials = data.get("plot_essentials", "None.")
     except Exception as e:
         # Internal Server Error
         return jsonify({"error": str(e)}), 500
 
-    return jsonify({"content": content, "summary": summary})
+    return jsonify({"content": content, "summary": summary, "plot_essentials": plot_essentials})
 
 
 @app.route('/api/save', methods=['POST'])
@@ -48,13 +49,17 @@ def save_file():
     filename = data.get('filename')
     content = data.get('content')
     summary = data.get('summary', 'None.')
+    plot_essentials = data.get('plot_essentials', 'None.')
 
+    if not filename:
+        return jsonify({"error": "Filename is required"}), 400
+    
     path = os.path.join(BASE_DIR, filename)
 
     with open(path, 'w', encoding='utf-8') as f:
-        json.dump({"content": content, "summary": summary}, f, ensure_ascii=False, indent=2)
+        json.dump({"content": content, "summary": summary, "plot_essentials": plot_essentials}, f, ensure_ascii=False, indent=2)
 
-    return jsonify({"message": "File saved as " + filename})
+    return jsonify({"message": "File saved as " + filename + "."})
 
 @app.route('/api/continue', methods=['POST'])
 def continue_story():
@@ -64,16 +69,12 @@ def continue_story():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     content = data.get('content')
-    summary = data.get('summary', 'None.')
     model = data.get('model')
     if not model:
         return jsonify({"error": "Model is required."}), 400
 
     if not content or content.strip() == "":
         return jsonify({"error": "Empty content."}), 400
-    
-    # Trim content to save context length
-    trimmed_content = utils.trim_content_to_length(content)
 
     # Validate environment configuration
     api_url = os.getenv("API_URL")
@@ -87,10 +88,7 @@ def continue_story():
         "model": model,
         "messages": [
             {"role": "system", "content": GENERATION_SYS_PROMPT},
-            {
-                "role": "user",
-                "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"
-            }
+            {"role": "user", "content": content}
         ],
         "max_tokens": 200,
         "temperature": 0.7
@@ -104,6 +102,9 @@ def continue_story():
         return jsonify({"error": message}), status
 
     continued_content = result["choices"][0]["message"]["content"]
+
+    if not continued_content or continued_content.strip() == "":
+        return jsonify({"error": "AI API returned empty content."}), 500
 
     trimmed = utils.trim_incomplete_sentences(continued_content)
 
@@ -120,12 +121,9 @@ def summarize():
         return jsonify({"error": "Empty content."}), 400
     
     mode = data.get('mode', 'cloud')  # Default to cloud summarization
-    
-    summary = data.get('summary', 'None.')
 
     model = 'llama-3.1-8b-instant'
     
-    trimmed_content = utils.trim_content_to_length(content)
     new_summary = ""
 
     if mode == 'cloud':
@@ -142,13 +140,10 @@ def summarize():
             "model": model,
             "messages": [
                 {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
-                {
-                    "role": "user",
-                    "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"
-                }
+                {"role": "user", "content": content}
             ],
-            "max_tokens": 200,
-            "temperature": 0.7
+            "temperature": 0.7,
+            "max_tokens": 200
         }
 
         # Call external AI API with error handling
@@ -165,7 +160,7 @@ def summarize():
             "model": "tinyllama",
             "messages": [
                 {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
-                {"role": "user", "content": f"STORY SUMMARY: {summary}\n\nRECENT STORY: {content}"}
+                {"role": "user", "content": content}
             ],
             "options": {
                 "num_predict": 200,

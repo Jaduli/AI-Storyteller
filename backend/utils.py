@@ -7,20 +7,6 @@ def trim_incomplete_sentences(text):
         return text[:last_period_index + 1]
     return text
 
-def trim_content_to_length(text, max_length=300):
-    if len(text) <= max_length:
-        return text
-
-    # Get recent content up to max_length
-    trimmed = text[-max_length:]
-
-    # Remove partial sentence at the start
-    start_match = re.search(r'[.!?]\s+', trimmed)
-    if start_match:
-        trimmed = trimmed[start_match.end():]
-
-    return trimmed.strip()
-
 def call_ai_api(api_url, headers, payload):
     try:
         response = requests.post(api_url, headers=headers, json=payload, timeout=10)
@@ -38,10 +24,6 @@ def call_ai_api(api_url, headers, payload):
             if data and "error" in data:
                 message = data["error"].get("message", message)
 
-                # Check for common model-related error messages (e.g. "model not found")
-                if "model" in message.lower():
-                    return None, (f"Model error: {message}", 400)
-
             return None, (message, 400)
 
         if response.status_code == 429:
@@ -56,10 +38,10 @@ def call_ai_api(api_url, headers, payload):
         if response.status_code != 200:
             return None, (f"Unexpected error: {response.text}", response.status_code)
 
-        # Parse JSON
-        try:
-            return response.json(), None
-        except Exception:
+        # Return data if valid, otherwise return error
+        if (data):
+            return data, None
+        else:
             return None, ("Invalid response from AI API.", 500)
 
     except requests.exceptions.Timeout:
