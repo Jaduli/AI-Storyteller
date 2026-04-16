@@ -16,15 +16,22 @@ export default {
       status_message: '',
       save_action_counter: 0,
       summarize_action_counter: 0,
-      filename: ''
+      filename: '',
+      show_summary: false
     }
   },
   methods: {
+    trimToTokenApprox(text, maxTokens) {
+      // Approximate characters per token
+      const approxCharsPerToken = 4;
+      const maxChars = maxTokens * approxCharsPerToken;
+
+      return text.slice(-maxChars);
+    },
     async continueStory() {
       try {
-        // Trim content to last context_length words
-        const words = this.content.split(/\s+/);
-        const recent_story = words.slice(-this.context_length).join(' ');
+        // Trim content to last context_length for better performance
+        const recent_story = this.trimToTokenApprox(this.content, this.context_length);
 
         this.status_message = 'Continuing story...';
         const res = await fetch('http://localhost:5000/api/continue', {
@@ -165,6 +172,7 @@ export default {
 
 <template>
   <div class="container">
+    <h2>Story Editor</h2>
     <textarea 
     ref="storyBox"
     v-model="content" 
@@ -177,6 +185,15 @@ export default {
     <p>{{ status_message}}</p>
   </div>
   <div class="container">
+    <h2>Load/Save Story</h2>
+    <input v-model="filename" placeholder="Enter filename" />
+    <button @click="loadStory">Load Story</button>
+    <button @click="saveStory">Save Story</button>
+  </div>
+  <button @click="show_summary = !show_summary">
+    {{ show_summary ? 'Hide Summary' : 'Show Summary' }}
+  </button>
+  <div class="container" v-if="show_summary">
     <h3>Summary</h3>
     <textarea v-model="summary" 
     rows="5" 
@@ -186,11 +203,6 @@ export default {
     <div>
       <button @click="summarizeStory">Summarize Story</button>
     </div>
-  </div>
-  <div class="container">
-    <input v-model="filename" placeholder="Enter filename" />
-    <button @click="loadStory">Load Story</button>
-    <button @click="saveStory">Save Story</button>
   </div>
 </template>
 

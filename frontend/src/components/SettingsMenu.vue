@@ -12,8 +12,14 @@ export default {
   computed: {
     // Create computed properties with getters and setters to emit value updates
     modelVal: {
-      get() { return this.model },
-      set(v) { this.$emit('update:model', v) }
+      get() {
+        return this.model
+      },
+      set(v) {
+        // Default to 'llama-3.1-8b-instant' if input is empty
+        const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant'
+        this.$emit('update:model', value)
+      }
     },
     contextLengthVal: {
       get() { return this.context_length },
@@ -44,35 +50,35 @@ export default {
     <h2>Settings</h2>
 
     <div>
-      <label>Model Name:</label>
+      <label>Model Name: </label>
       <input v-model="modelVal" 
       type="text" 
-      placeholder="Default: llama-3.1-8b-instant"
+      placeholder="llama-3.1-8b-instant"
       />
     </div>
 
     <div>
-      <label>Context Length:</label>
+      <label>Context Length: </label>
       <input v-model.number="contextLengthVal" type="number" />
     </div>
 
     <div>
-      <label>Auto-Save:</label>
+      <label>Auto-Save: </label>
       <input v-model="autoSaveVal" type="checkbox" />
     </div>
 
     <div v-if="autoSaveVal">
-      <label>Save After Actions:</label>
+      <label>Save After Actions: </label>
       <input v-model.number="saveAfterActionsVal" type="number" />
     </div>
 
     <div>
-      <label>Auto-Summarize:</label>
+      <label>Auto-Summarize: </label>
       <input v-model="autoSummarizeVal" type="checkbox" />
     </div>
 
     <div v-if="autoSummarizeVal">
-      <label>Summarize After Actions:</label>
+      <label>Summarize After Actions: </label>
       <input v-model.number="summarizeAfterActionsVal" type="number" />
     </div>
   </div>

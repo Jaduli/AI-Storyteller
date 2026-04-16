@@ -1,5 +1,7 @@
 # AI-Storyteller
 
+RUNNING INSTRUCTIONS
+
 Docker is required to run the app: https://www.docker.com/products/docker-desktop/.
 
 With Docker running, navigate to "AI-Storyteller" folder in your terminal and run "docker-compose up --build" to start the app.
@@ -9,5 +11,25 @@ Add your API key and URL to backend/.env. The API key is ONLY used for API calls
 Example AI, GroqCloud:
 https://console.groq.com/home
 API URL: https://api.groq.com/openai/v1/chat/completions
+
+
+GENERATION INSRUCTIONS
+
+Once you have the app running, begin a story by writing in the editor or load a previous story with its file name. Click on 'Continue Story' for the AI to continue from where the story left off. The AI uses summary and recent story as context based on set context length. Story summary can be edited in the Summary-menu.
+
+Generation model and context length can be edited in the Settings-menu. The story can also be set to auto-save (requires filename set) and to auto-summarize after set amount of story continue-actions.
+
+The story can be saved any time. Note that saving overrides the previous file. Saved files can be found in backend/files.
+
+Default prompts for story/summary generation can be found in backend/default_prompts.py file.
+
+
+PROJECT INFORMATION
+
+Technologies used
+- Docker for containerization
+- Backend: Python + Flask
+- Frontend: Vue + Nginx
+- Local AI: Ollama (currently unused in story generation)
 
 ChatGPT-5 has been used to assist in programming and debugging code.

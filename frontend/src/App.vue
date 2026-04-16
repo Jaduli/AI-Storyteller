@@ -12,7 +12,8 @@ export default {
       auto_save: false,
       auto_summarize: true,
       summarize_after_actions: 3,
-      save_after_actions: 5
+      save_after_actions: 5,
+      show_settings: false
     }
   }
 }
@@ -21,7 +22,20 @@ export default {
 <template>
   <div>
     <h1>AI Storyteller</h1>
-    <SettingsMenu
+    <StoryEditor
+      :model="model"
+      :context_length="context_length"
+      :auto_save="auto_save"
+      :auto_summarize="auto_summarize"
+      :summarize_after_actions="summarize_after_actions"
+      :save_after_actions="save_after_actions"
+    />
+    <button @click="show_settings = !show_settings">
+      {{ show_settings ? 'Hide Settings' : 'Show Settings' }}
+    </button>
+    <SettingsMenu 
+      v-if="show_settings"
+      
       :model="model"
       :context_length="context_length"
       :auto_save="auto_save"
@@ -35,14 +49,6 @@ export default {
       @update:auto_summarize="auto_summarize = $event"
       @update:summarize_after_actions="summarize_after_actions = $event"
       @update:save_after_actions="save_after_actions = $event"
-    />
-    <StoryEditor
-      :model="model"
-      :context_length="context_length"
-      :auto_save="auto_save"
-      :auto_summarize="auto_summarize"
-      :summarize_after_actions="summarize_after_actions"
-      :save_after_actions="save_after_actions"
     />
   </div>
 </template>
