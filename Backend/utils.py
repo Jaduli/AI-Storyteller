@@ -25,7 +25,25 @@ def call_ai_api(api_url, headers, payload):
     try:
         response = requests.post(api_url, headers=headers, json=payload, timeout=10)
 
+        # Try to parse JSON
+        try:
+            data = response.json()
+        except Exception:
+            data = None
+
         # Handle HTTP errors explicitly
+        if response.status_code == 400:
+            message = "Bad request."
+
+            if data and "error" in data:
+                message = data["error"].get("message", message)
+
+                # Check for common model-related error messages (e.g. "model not found")
+                if "model" in message.lower():
+                    return None, (f"Model error: {message}", 400)
+
+            return None, (message, 400)
+
         if response.status_code == 429:
             return None, ("Rate limit exceeded. Wait or increase rate limit.", 429)
 

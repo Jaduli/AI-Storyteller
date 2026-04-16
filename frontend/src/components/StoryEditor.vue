@@ -1,15 +1,22 @@
 <script>
 export default {
+  name: 'StoryEditor',
   props: {
-    model: { type: String, default: '' }
+    model: String,
+    context_length: Number,
+    auto_save: Boolean,
+    auto_summarize: Boolean,
+    summarize_after_actions: Number,
+    save_after_actions: Number
   },
   data() {
     return {
       content: '',
       summary: '',
       status_message: '',
-      action_counter: 0,
-      context_length: 300 // Number of words to send as context for story generation
+      save_action_counter: 0,
+      summarize_action_counter: 0,
+      filename: ''
     }
   },
   methods: {
@@ -47,10 +54,24 @@ export default {
         });
 
         this.status_message = '';
-        this.action_counter++;
-        if (this.action_counter >= 3) {
-          await this.summarizeStory();
-          this.action_counter = 0; // reset counter
+
+        // Automatically summarize after a set number of continue actions
+        if (this.auto_summarize) {
+          this.summarize_action_counter++; 
+
+          if  (this.summarize_action_counter >= this.summarize_after_actions) {
+            await this.summarizeStory();
+            this.summarize_action_counter = 0; // reset counter
+          }
+        }
+        // Automatically save story after a set number of continue actions
+        if (this.auto_save) {
+          this.save_action_counter++;
+         
+          if (this.save_action_counter >= this.save_after_actions) {
+            await this.saveStory();
+            this.save_action_counter = 0; // reset counter
+          }
         }
       } catch (err) {
         this.status_message = 'Error continuing story: ' + err.error;
@@ -84,6 +105,59 @@ export default {
       } catch (err) {
         this.status_message = 'Error summarizing story: ' + err.error;
       }
+    },
+    async saveStory() {
+      if (!this.filename) {
+        this.status_message = 'Please enter a filename to save the story.';
+        return;
+      }
+      this.status_message = 'Saving story...';
+      try {
+        // Ensure filename ends with .json
+        const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
+        const res = await fetch('http://localhost:5000/api/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            filename,
+            content: this.content,
+            summary: this.summary
+          })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          this.status_message = 'Error saving story: ' + data.error;
+          return;
+        }
+        this.status_message = data.message || 'Story saved.';
+      } catch (err) {
+        this.status_message = 'Error saving story: ' + err.error;
+      }
+    },
+    async loadStory() {
+      if (!this.filename) {
+        this.status_message = 'Please enter a filename to load the story.';
+        return;
+      }
+      this.status_message = 'Loading story...';
+      try {
+        const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
+        const res = await fetch('http://localhost:5000/api/load?filename=' + encodeURIComponent(filename));
+        const data = await res.json();
+
+        if (data.error) {
+          this.status_message = 'Error loading story: ' + data.error;
+          return;
+        }
+        this.content = data.content || '';
+        this.summary = data.summary || '';
+        this.status_message = 'Story loaded.';
+      } catch (err) {
+        this.status_message = 'Error loading story: ' + err.error;
+      }
     }
   }
 }
@@ -113,8 +187,13 @@ export default {
       <button @click="summarizeStory">Summarize Story</button>
     </div>
   </div>
+  <div class="container">
+    <input v-model="filename" placeholder="Enter filename" />
+    <button @click="loadStory">Load Story</button>
+    <button @click="saveStory">Save Story</button>
+  </div>
 </template>
 
-<style>
+<style scoped>
 
 </style>
