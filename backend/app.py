@@ -136,7 +136,8 @@ def continue_story():
     
     full_prompt = content
 
-    memories = database.get_relevant_memories(content, story_id)
+    # Get relevant memories for recent content
+    memories = database.get_relevant_memories(content[-2000:], story_id)
 
     if (memories != []):
         memory_block = "\n".join(memories)

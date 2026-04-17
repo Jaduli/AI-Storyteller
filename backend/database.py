@@ -57,7 +57,7 @@ def get_memories(story_id):
     return [row["content"] for row in rows]
 
 def embed(text):
-    return model.encode(text).tolist()
+    return model.encode(text).astype("float32")
 
 def create_memory(story_id, content):
     # 1. Save to SQLite
@@ -67,7 +67,7 @@ def create_memory(story_id, content):
     embedding = embed(content)
 
     # 3. Add to FAISS WITH ID
-    vector = np.array([embedding]).astype("float32")
+    vector = embedding.reshape(1, -1)
     ids = np.array([memory_id]).astype("int64")
 
     index.add_with_ids(vector, ids)
@@ -78,7 +78,7 @@ def create_memory(story_id, content):
     return memory_id
 
 def search_memories(query_embedding, top_k=5):
-    vector = np.array([query_embedding]).astype("float32")
+    vector = query_embedding.reshape(1, -1)
     distances, indices = index.search(vector, top_k)
 
     return [int(i) for i in indices[0] if i != -1]
