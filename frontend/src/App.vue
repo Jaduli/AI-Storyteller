@@ -7,7 +7,12 @@ export default {
   data() {
     return {
       // Default settings
-      model: 'llama-3.1-8b-instant', // Free model on Groq
+      // Main model used for story continuation
+      main_model: 'llama-3.1-8b-instant', // Free model on Groq
+      // Memory model used for memory and summary generation
+      mem_model: 'llama-3.1-8b-instant',
+      // If true, memory and summary are generated with local AI
+      use_local: false, 
       context_length: 300,
       auto_save: false,
       auto_summarize: true,
@@ -23,7 +28,9 @@ export default {
   <div>
     <h1>AI Storyteller</h1>
     <StoryEditor class="story-editor"
-      :model="model"
+      :main_model="main_model"
+      :mem_model="mem_model"
+      :use_local="use_local"
       :context_length="context_length"
       :auto_save="auto_save"
       :auto_summarize="auto_summarize"
@@ -36,14 +43,18 @@ export default {
     <SettingsMenu 
       v-if="show_settings"
       
-      :model="model"
+      :main_model="main_model"
+      :mem_model="mem_model"
+      :use_local="use_local"
       :context_length="context_length"
       :auto_save="auto_save"
       :auto_summarize="auto_summarize"
       :summarize_after_actions="summarize_after_actions"
       :save_after_actions="save_after_actions"
 
-      @update:model="model = $event"
+      @update:main_model="main_model = $event"
+      @update:mem_model="mem_model = $event"
+      @update:use_local="use_local = $event"
       @update:context_length="context_length = $event"
       @update:auto_save="auto_save = $event"
       @update:auto_summarize="auto_summarize = $event"

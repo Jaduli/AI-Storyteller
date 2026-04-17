@@ -6,6 +6,7 @@ services:
       - "5000:5000"
     volumes:
       - ./backend/files:/app/files
+      - ./backend/data:/app/data
 
   frontend:
     build: ./frontend
@@ -14,14 +15,13 @@ services:
     depends_on:
       - backend
 
-  # Local AI service currently disabled
-  #ai:
-   # build: ./ai
-    #image: ollama/ollama
-    #ports:
-     # - "11434:11434"
-    #volumes:
-     # - ollama_data:/root/.ollama
+  ai:
+    build: ./ai
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
 
-#volumes:
- # ollama_data:
+volumes:
+ ollama_data:

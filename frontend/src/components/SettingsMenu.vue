@@ -2,7 +2,9 @@
 export default {
   name: 'SettingsMenu',
   props: {
-    model: String,
+    main_model: String,
+    mem_model: String,
+    use_local: Boolean,
     context_length: Number,
     auto_save: Boolean,
     auto_summarize: Boolean,
@@ -11,15 +13,29 @@ export default {
   },
   computed: {
     // Create computed properties with getters and setters to emit value updates
-    modelVal: {
+    mainModelVal: {
       get() {
-        return this.model
+        return this.main_model
       },
       set(v) {
         // Default to 'llama-3.1-8b-instant' if input is empty
         const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant'
-        this.$emit('update:model', value)
+        this.$emit('update:main_model', value)
       }
+    },
+    memModelVal: {
+      get() {
+        return this.mem_model
+      },
+      set(v) {
+        // Default to 'llama-3.1-8b-instant' if input is empty
+        const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant'
+        this.$emit('update:mem_model', value)
+      }
+    },
+    localVal: {
+      get() { return this.use_local },
+      set(v) { this.$emit('update:use_local', v) }
     },
     contextLengthVal: {
       get() { return this.context_length },
@@ -50,11 +66,24 @@ export default {
     <h2>Settings</h2>
 
     <div>
-      <label>Model Name: </label>
-      <input v-model="modelVal" 
+      <label>Main Model Name: </label>
+      <input v-model="mainModelVal" 
       type="text" 
       placeholder="llama-3.1-8b-instant"
       />
+    </div>
+
+    <div>
+      <label>Memorize/Summarize Model Name: </label>
+      <input v-model="memModelVal" 
+      type="text" 
+      placeholder="llama-3.1-8b-instant"
+      />
+    </div>
+
+    <div>
+      <label>Use Local AI: </label>
+      <input v-model="localVal" type="checkbox" />
     </div>
 
     <div>

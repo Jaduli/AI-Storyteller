@@ -2,7 +2,9 @@
 export default {
   name: 'StoryEditor',
   props: {
-    model: String,
+    main_model: String,
+    mem_model: String,
+    use_local: Boolean,
     context_length: Number,
     auto_save: Boolean,
     auto_summarize: Boolean,
@@ -11,14 +13,20 @@ export default {
   },
   data() {
     return {
+      // Random story ID for storing memories in database
+      story_id: crypto.getRandomValues(new Uint32Array(1))[0],
+      // Components
       content: '',
       summary: '',
       plot_essentials: '',
+      memories: '',
       status_message: '',
+      // Values
       save_action_counter: 0,
       summarize_action_counter: 0,
       filename: '',
-      active_tab: 'editor'
+      active_tab: 'editor',
+      memory_cursor: 0
     }
   },
   methods: {
@@ -29,6 +37,26 @@ export default {
       const maxChars = maxTokens * approxCharsPerToken;
 
       return text.slice(-maxChars);
+    },
+    // Helper function to trim past content for memory creation
+    trimToPastContent(text, maxTokens) {
+      const approxCharsPerToken = 4;
+      const maxChars = this.context_length * approxCharsPerToken;
+
+      const cutoffIndex = Math.max(0, this.content.length - maxChars);
+
+      // Only process old content which hasn't yet been memorized
+      const newOldContent = this.content.slice(this.memory_cursor, cutoffIndex);
+
+      // Avoid creating short memories
+      if (newOldContent.length < 50){
+        return '';
+      }
+
+      // Move cursor forward
+      this.memory_cursor = cutoffIndex;
+
+      const content = 'Past Story:\n' + newOldContent;
     },
     // Main function to continue the story with the backend API
     async continueStory() {
@@ -41,7 +69,7 @@ export default {
       try {
         const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
 
-        // Use half of the context length for plot essentials + summary and half for recent story content
+        // Use third of the context length for plot essentials + summary and a third for recent story content
         const trimmed_context = this.trimToTokenApprox(context, this.context_length / 2);
         const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
         const full_context = 'Context:\n' + trimmed_context + '\n\n Recent Story:\n' + recent_story;
@@ -52,8 +80,9 @@ export default {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
+            story_id: this.story_id,
             content: full_context,
-            model: this.model
+            model: this.main_model
           })
         });
         const data = await res.json();
@@ -114,7 +143,9 @@ export default {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content: full_context
+            content: full_context,
+            model: this.mem_model,
+            local: this.use_local
           })
         });
         const data = await res.json();
@@ -127,6 +158,44 @@ export default {
         this.status_message = 'Story summarized.';
       } catch (err) {
         this.status_message = 'Error summarizing story: ' + err.error;
+      }
+    },
+    // Function to create a memory with the backend API
+    async createMemory() {
+      if (!this.content || this.content.trim().length < 50) {
+        return;
+      }
+      try {
+        // Use past story content for new memory
+        const content = 'Past Story:\n' + this.trimToPastContent(this.content, this.context_length);
+
+        if (content.trim() == '') {
+          return;
+        }
+
+        const res = await fetch('http://localhost:5000/api/memorize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            story_id: this.story_id,
+            content: content,
+            model: this.mem_model,
+            local: this.use_local
+          })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          this.status_message = 'Error creating memory: ' + data.error;
+          return;
+        }
+        this.memories += 'Created Memory:\n'
+        this.memories += data.memory || '';
+        this.memories += '\n\n'
+      } catch (err) {
+        this.status_message = 'Error creating memory: ' + err.error;
       }
     },
     // Function to save the story to the backend API
@@ -148,7 +217,8 @@ export default {
             filename,
             content: this.content,
             summary: this.summary,
-            plot_essentials: this.plot_essentials
+            plot_essentials: this.plot_essentials,
+            story_id: this.story_id
           })
         });
         const data = await res.json();
@@ -181,6 +251,8 @@ export default {
         this.content = data.content || '';
         this.summary = data.summary || '';
         this.plot_essentials = data.plot_essentials || '';
+        this.story_id = data.story_id || crypto.getRandomValues(new Uint32Array(1))[0];
+
         this.status_message = 'Story loaded successfully.';
       } catch (err) {
         this.status_message = 'Error loading story: ' + err.error;
@@ -211,6 +283,13 @@ export default {
     @click="active_tab = 'essentials'"
   >
     Essentials
+  </button>
+
+  <button 
+    :class="{ active: active_tab === 'memories' }"
+    @click="active_tab = 'memories'"
+  >
+    Memories
   </button>
   </div>
   <div class="tab-content">
@@ -243,6 +322,15 @@ export default {
       rows="15" 
       cols="80" 
       placeholder="Key plot points, character details, or world-building elements. This will be used as context in story generation.">
+      </textarea>
+    </div>
+    <div class="container" v-show="active_tab === 'memories'">
+      <h2>Created Memories</h2>
+      <textarea v-model="memories" 
+      rows="15" 
+      cols="80" 
+      placeholder="New memories will show up here."
+      readonly>
       </textarea>
     </div>
   </div>
