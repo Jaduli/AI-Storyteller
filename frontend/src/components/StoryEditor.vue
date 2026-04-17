@@ -22,14 +22,22 @@ export default {
     }
   },
   methods: {
+    // Helper function to trim text to approximate token length
     trimToTokenApprox(text, maxTokens) {
-      // Approximate characters per token
+      // Approximate to 4 characters per token (may vary based on language and content)
       const approxCharsPerToken = 4;
       const maxChars = maxTokens * approxCharsPerToken;
 
       return text.slice(-maxChars);
     },
+    // Main function to continue the story with the backend API
     async continueStory() {
+      // Basic validation to ensure there's enough content to continue
+      if (!this.content || this.content.trim().length < 20) {
+        this.status_message = 'Error: Please enter enough story content to continue.';
+        return;
+      }
+      this.status_message = 'Continuing story...';
       try {
         const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
 
@@ -38,7 +46,6 @@ export default {
         const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
         const full_context = 'Context:\n' + trimmed_context + '\n\n Recent Story:\n' + recent_story;
 
-        this.status_message = 'Continuing story...';
         const res = await fetch('http://localhost:5000/api/continue', {
           method: 'POST',
           headers: {
@@ -88,7 +95,12 @@ export default {
         this.status_message = 'Error continuing story: ' + err.error;
       }
     },
+    // Function to summarize the story with the backend API
     async summarizeStory() {
+      if (!this.content || this.content.trim().length < 50) {
+        this.status_message = 'Error: Please enter enough story content to summarize.';
+        return;
+      }
       this.status_message = 'Summarizing story...';
       try {
         // Use half of the context length for summary and half for recent story content
@@ -117,6 +129,7 @@ export default {
         this.status_message = 'Error summarizing story: ' + err.error;
       }
     },
+    // Function to save the story to the backend API
     async saveStory() {
       if (!this.filename) {
         this.status_message = 'Please enter a filename to save the story.';
@@ -149,6 +162,7 @@ export default {
         this.status_message = 'Error saving story: ' + err.error;
       }
     },
+    // Function to load the story from backend API
     async loadStory() {
       if (!this.filename) {
         this.status_message = 'Please enter a filename to load the story.';
@@ -193,10 +207,10 @@ export default {
   </button>
 
   <button 
-    :class="{ active: active_tab === 'plot' }"
-    @click="active_tab = 'plot'"
+    :class="{ active: active_tab === 'essentials' }"
+    @click="active_tab = 'essentials'"
   >
-    Plot
+    Essentials
   </button>
   </div>
   <div class="tab-content">
@@ -223,7 +237,7 @@ export default {
         <button @click="summarizeStory">Summarize Story</button>
       </div>
     </div>
-    <div class="container" v-show="active_tab === 'plot'">
+    <div class="container" v-show="active_tab === 'essentials'">
       <h2>Plot Essentials</h2>
       <textarea v-model="plot_essentials" 
       rows="15" 

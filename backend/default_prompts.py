@@ -1,4 +1,4 @@
-GENERATION_SYS_PROMPT = GENERATION_SYS_PROMPT = """
+GENERATION_SYS_PROMPT = """
 You are a storytelling assistant that continues an existing story.
 
 Your task:

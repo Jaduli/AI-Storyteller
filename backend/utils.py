@@ -1,6 +1,14 @@
 import re
 import requests
 
+"""
+Utility functions for AI Storyteller backend, including:
+- trim_incomplete_sentences: Trims text to the last complete sentence. Useful due to
+  AI models sometimes returning incomplete sentences at the end of generated content.
+- call_ai_api: Makes a POST request to an AI API with error handling for various scenarios
+  (HTTP errors, timeouts, connection issues, and unexpected exceptions). 
+  Returns either the API response data or an error message with an appropriate status code.
+"""
 def trim_incomplete_sentences(text):
     last_period_index = text.rfind('.')
     if last_period_index != -1:
@@ -9,6 +17,7 @@ def trim_incomplete_sentences(text):
 
 def call_ai_api(api_url, headers, payload):
     try:
+        # Call external AI API with 10-second timeout
         response = requests.post(api_url, headers=headers, json=payload, timeout=10)
 
         # Try to parse JSON

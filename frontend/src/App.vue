@@ -7,7 +7,7 @@ export default {
   data() {
     return {
       // Default settings
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.1-8b-instant', // Free model on Groq
       context_length: 300,
       auto_save: false,
       auto_summarize: true,

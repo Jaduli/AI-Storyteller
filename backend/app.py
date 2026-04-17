@@ -16,9 +16,18 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-BASE_DIR = "files"
+BASE_DIR = "files" # Directory to store story files
 os.makedirs(BASE_DIR, exist_ok=True)
 
+
+# Backend Functions #
+
+"""
+/load
+
+Load story file content, summary, and plot essentials. 
+Returns 400 if filename is missing, 404 if file not found, and 500 for other errors.
+"""
 @app.route('/api/load', methods=['GET'])
 def load_file():
     filename = request.args.get('filename')
@@ -42,7 +51,12 @@ def load_file():
 
     return jsonify({"content": content, "summary": summary, "plot_essentials": plot_essentials})
 
+"""
+/save
 
+Save story file content, summary, and plot essentials. 
+Returns 400 if filename is missing.
+"""
 @app.route('/api/save', methods=['POST'])
 def save_file():
     data = request.json
@@ -61,6 +75,14 @@ def save_file():
 
     return jsonify({"message": "File saved as " + filename + "."})
 
+"""
+/continue
+
+Continue story using external AI API. 
+Returns 400 for missing/invalid JSON, empty content, or missing model; 
+API call errors with appropriate status codes (from utils.call_ai_api);
+500 for server or API errors, or if AI API returns empty content.
+"""
 @app.route('/api/continue', methods=['POST'])
 def continue_story():
     # Validate request JSON
@@ -110,6 +132,14 @@ def continue_story():
 
     return jsonify({"continued_content": trimmed})
 
+"""
+/summarize
+
+Summarize story using external AI API (local currently not in use).
+Returns 400 for missing/invalid JSON, empty content, or missing model;
+API call errors with appropriate status codes (from utils.call_ai_api);
+500 for server or API errors, or if AI API returns empty summary.
+"""
 @app.route('/api/summarize', methods=['POST'])
 def summarize():
     data = request.get_json(silent=True)
@@ -155,7 +185,8 @@ def summarize():
 
         new_summary = result["choices"][0]["message"]["content"]
 
-    else:    
+    else:
+        # Local summarization using Ollama API
         response = requests.post(OLLAMA_URL, json={
             "model": "tinyllama",
             "messages": [

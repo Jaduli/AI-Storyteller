@@ -32,4 +32,8 @@ Technologies used
 - Frontend: Vue + Nginx
 - Local AI: Ollama (currently unused in story generation)
 
-ChatGPT-5 has been used to assist in programming and debugging code.
+
+AI USAGE INFORMATION
+This program has been made in VSCode with GitHub Copilot(free version for TUNI students) tuned on. Model used is GPT-5 mini. Copilot has helped with debugging problematic code and generating useful functions such as for trimming text. AI has NOT been used in the overall structure, project idea, or technology selection.
+
+Prompts for story generation (in backend/default_prompts.py) have been improved with the help of ChatGPT-5.
