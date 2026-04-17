@@ -12,8 +12,9 @@ import database
 # Initialize the database
 database.init_db()
 
-# Local Ollama model API endpoint
+# Local Ollama model API endpoint and model
 OLLAMA_URL = "http://ai:11434/api/chat"
+OLLAMA_MODEL = "llama3:8b"
 
 load_dotenv()
 
@@ -230,7 +231,7 @@ def summarize():
     else:
         # Local summarization using Ollama API
         response = requests.post(OLLAMA_URL, json={
-            "model": "tinyllama",
+            "model": OLLAMA_MODEL,
             "messages": [
                 {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
                 {"role": "user", "content": content}
@@ -308,7 +309,7 @@ def memorize():
     else:
         # Local memorization using Ollama API
         response = requests.post(OLLAMA_URL, json={
-            "model": "tinyllama",
+            "model": OLLAMA_MODEL,
             "messages": [
                 {"role": "system", "content": MEMORY_SYS_PROMPT},
                 {"role": "user", "content": content}
