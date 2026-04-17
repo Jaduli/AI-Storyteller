@@ -48,8 +48,8 @@ export default {
       // Only process old content which hasn't yet been memorized
       const newOldContent = this.content.slice(this.memory_cursor, cutoffIndex);
 
-      // Avoid creating short memories
-      if (newOldContent.length < 50){
+      // Create memory only with enough relevant content
+      if (newOldContent.length < maxChars){
         return '';
       }
 
@@ -120,6 +120,7 @@ export default {
             this.save_action_counter = 0; // reset counter
           }
         }
+        // Automatically turn past context into a memory
       } catch (err) {
         this.status_message = 'Error continuing story: ' + err.error;
       }
@@ -218,7 +219,8 @@ export default {
             content: this.content,
             summary: this.summary,
             plot_essentials: this.plot_essentials,
-            story_id: this.story_id
+            story_id: this.story_id,
+            memory_cursor: this.memory_cursor
           })
         });
         const data = await res.json();
@@ -252,6 +254,7 @@ export default {
         this.summary = data.summary || '';
         this.plot_essentials = data.plot_essentials || '';
         this.story_id = data.story_id || crypto.getRandomValues(new Uint32Array(1))[0];
+        this.memory_cursor = data.memory_cursor || 0;
 
         this.status_message = 'Story loaded successfully.';
       } catch (err) {

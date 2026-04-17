@@ -1,3 +1,4 @@
 backend/files/*
 .env
 .env.*
+backend/data/memory.db

@@ -48,6 +48,7 @@ def load_file():
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             story_id = data.get("story_id")
+            memory_cursor = data.get("memory_cursor")
             content = data.get("content", "")
             summary = data.get("summary", "None.")
             plot_essentials = data.get("plot_essentials", "None.")
@@ -58,7 +59,8 @@ def load_file():
     if not story_id:
         return jsonify({"error": "Story ID missing from file."}), 400
 
-    return jsonify({"content": content, "summary": summary, "plot_essentials": plot_essentials})
+    return jsonify({"story_id": story_id, "memory_cursor": memory_cursor, "content": content, 
+                    "summary": summary, "plot_essentials": plot_essentials})
 
 """
 /save
@@ -74,6 +76,7 @@ def save_file():
     summary = data.get('summary', 'None.')
     plot_essentials = data.get('plot_essentials', 'None.')
     story_id = data.get('story_id')
+    memory_cursor = data.get('memory_cursor')
 
     if not filename:
         return jsonify({"error": "Filename is required"}), 400
@@ -83,7 +86,8 @@ def save_file():
     path = os.path.join(BASE_DIR, filename)
 
     with open(path, 'w', encoding='utf-8') as f:
-        json.dump({"story_id": story_id, "content": content, "summary": summary, "plot_essentials": plot_essentials}, 
+        json.dump({"story_id": story_id, "memory_cursor": memory_cursor, "content": content, "summary": summary, 
+                   "plot_essentials": plot_essentials}, 
                   f, ensure_ascii=False, indent=2)
 
     return jsonify({"message": "File saved as " + filename + "."})
@@ -111,6 +115,10 @@ def continue_story():
     model = data.get('model')
     if not model:
         return jsonify({"error": "Model is required."}), 400
+    
+    story_id = data.get('story_id')
+    if not story_id:
+        return jsonify({"error": "Story ID is required."}), 400
 
     # Validate environment configuration
     api_url = os.getenv("API_URL")
@@ -118,16 +126,20 @@ def continue_story():
     if not api_url or not api_key:
         return jsonify({"error": "API_URL or API_KEY not set."}), 500
     
-    memories = database.get_relevant_memories(content)
-    memory_block = "\n".join(memories)
+    full_prompt = content
 
-    full_prompt = f"""
-    Relevant Memories:
-    {memory_block}
+    memories = database.get_relevant_memories(content, story_id)
 
-    Recent Story:
-    {content}
-    """
+    if (memories != []):
+        memory_block = "\n".join(memories)
+
+        full_prompt = f"""
+        Relevant Memories:
+        {memory_block}
+
+        Recent Story:
+        {content}
+        """
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
@@ -224,7 +236,6 @@ def summarize():
                 {"role": "user", "content": content}
             ],
             "options": {
-                "num_predict": 200,
                 "temperature": 0.2
             },
             "stream": False
@@ -295,7 +306,7 @@ def memorize():
         new_memory = result["choices"][0]["message"]["content"]
 
     else:
-        # Local summarization using Ollama API
+        # Local memorization using Ollama API
         response = requests.post(OLLAMA_URL, json={
             "model": "tinyllama",
             "messages": [

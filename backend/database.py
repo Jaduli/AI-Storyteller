@@ -51,7 +51,7 @@ def get_memories(story_id):
     conn = get_db()
     rows = conn.execute(
         "SELECT content FROM memories WHERE story_id = ? ORDER BY created_at DESC",
-        (story_id)
+        (story_id,)
     ).fetchall()
     conn.close()
     return [row["content"] for row in rows]
@@ -83,7 +83,8 @@ def search_memories(query_embedding, top_k=5):
 
     return [int(i) for i in indices[0] if i != -1]
 
-def get_relevant_memories(query_embedding, story_id, top_k=5):
+def get_relevant_memories(content, story_id, top_k=5):
+    query_embedding = embed(content)
     ids = search_memories(query_embedding, top_k)
 
     if not ids:
