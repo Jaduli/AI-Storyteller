@@ -17,6 +17,8 @@ OLLAMA_URL = "http://ai:11434/api/chat"
 OLLAMA_MODEL = "llama3:8b"
 
 load_dotenv()
+api_url = os.getenv("API_URL")
+api_key = os.getenv("API_KEY")
 
 app = Flask(__name__)
 CORS(app)
@@ -122,8 +124,6 @@ def continue_story():
         return jsonify({"error": "Story ID is required."}), 400
 
     # Validate environment configuration
-    api_url = os.getenv("API_URL")
-    api_key = os.getenv("API_KEY")
     if not api_url or not api_key:
         return jsonify({"error": "API_URL or API_KEY not set."}), 500
     
@@ -163,6 +163,8 @@ def continue_story():
 
     continued_content = result["choices"][0]["message"]["content"]
 
+    print(f"[Backend] Total API call tokens used: {result['usage']['total_tokens']}", flush=True)
+
     if not continued_content or continued_content.strip() == "":
         return jsonify({"error": "AI API returned empty content."}), 500
 
@@ -188,11 +190,7 @@ def summarize():
     if not content or content.strip() == "":
         return jsonify({"error": "Empty content."}), 400
     
-    mode = 'cloud' # Default to cloud memorization
     local = data.get('local')
-
-    if (local and local == True):
-        mode = 'local'
 
     model = data.get('model')
     if not model:
@@ -200,11 +198,32 @@ def summarize():
     
     new_summary = ""
 
-    if mode == 'cloud':
-        # Validate environment configuration
-        api_url = os.getenv("API_URL")
-        api_key = os.getenv("API_KEY")
-        
+    if (local and local == True):
+        # Local summarization using Ollama API
+        response = requests.post(OLLAMA_URL, json={
+            "model": OLLAMA_MODEL,
+            "messages": [
+                {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
+                {"role": "user", "content": content}
+            ],
+            "options": {
+                "temperature": 0.2
+            },
+            "stream": False
+        })
+
+        if response.status_code == 200:
+            data = response.json()
+
+            new_summary = data.get("message", {}).get("content", "").strip()
+
+            total_tokens = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+
+            print(f"[Backend] Total local tokens used: {total_tokens}", flush=True)
+        else:
+            return {"error": response.text}, response.status_code
+    # Default to cloud  
+    else:
         if not api_url or not api_key:
             return jsonify({"error": "API_URL or API_KEY not set."}), 500
 
@@ -228,24 +247,7 @@ def summarize():
 
         new_summary = result["choices"][0]["message"]["content"]
 
-    else:
-        # Local summarization using Ollama API
-        response = requests.post(OLLAMA_URL, json={
-            "model": OLLAMA_MODEL,
-            "messages": [
-                {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
-                {"role": "user", "content": content}
-            ],
-            "options": {
-                "temperature": 0.2
-            },
-            "stream": False
-        })
-
-        if response.status_code == 200:
-            new_summary = response.json().get("message", {}).get("content", "").strip()
-        else:
-            return {"error": response.text}, response.status_code
+        print(f"[Backend] Total API call tokens used: {result['usage']['total_tokens']}", flush=True)
 
     trimmed = utils.trim_incomplete_sentences(new_summary)
 
@@ -261,11 +263,7 @@ def memorize():
     if not content or content.strip() == "":
         return jsonify({"error": "Empty content."}), 400
     
-    mode = 'cloud' # Default to cloud memorization
     local = data.get('local')
-
-    if (local and local == True):
-        mode = 'local'
 
     model = data.get('model')
     if not model:
@@ -277,11 +275,33 @@ def memorize():
     
     new_memory = ""
 
-    if mode == 'cloud':
-        # Validate environment configuration
-        api_url = os.getenv("API_URL")
-        api_key = os.getenv("API_KEY")
-        
+    if (local and local == True):
+        # Local memorization using Ollama API
+        response = requests.post(OLLAMA_URL, json={
+            "model": OLLAMA_MODEL,
+            "messages": [
+                {"role": "system", "content": MEMORY_SYS_PROMPT},
+                {"role": "user", "content": content}
+            ],
+            "options": {
+                "num_predict": 200,
+                "temperature": 0.0
+            },
+            "stream": False
+        })
+
+        if response.status_code == 200:
+            data = response.json()
+
+            new_memory = data.get("message", {}).get("content", "").strip()
+
+            total_tokens = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+
+            print(f"[Backend] Total local tokens used: {total_tokens}", flush=True)
+        else:
+            return {"error": response.text}, response.status_code
+    # Default to cloud
+    else:
         if not api_url or not api_key:
             return jsonify({"error": "API_URL or API_KEY not set."}), 500
 
@@ -306,25 +326,7 @@ def memorize():
 
         new_memory = result["choices"][0]["message"]["content"]
 
-    else:
-        # Local memorization using Ollama API
-        response = requests.post(OLLAMA_URL, json={
-            "model": OLLAMA_MODEL,
-            "messages": [
-                {"role": "system", "content": MEMORY_SYS_PROMPT},
-                {"role": "user", "content": content}
-            ],
-            "options": {
-                "num_predict": 200,
-                "temperature": 0.0
-            },
-            "stream": False
-        })
-
-        if response.status_code == 200:
-            new_memory = response.json().get("message", {}).get("content", "").strip()
-        else:
-            return {"error": response.text}, response.status_code
+        print(f"[Backend] Total API call tokens used: {result['usage']['total_tokens']}", flush=True)
 
     trimmed = utils.trim_incomplete_sentences(new_memory)
 
@@ -334,4 +336,4 @@ def memorize():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)

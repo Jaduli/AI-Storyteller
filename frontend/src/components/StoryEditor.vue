@@ -41,22 +41,18 @@ export default {
     // Helper function to trim past content for memory creation
     trimToPastContent(text, maxTokens) {
       const approxCharsPerToken = 4;
-      const maxChars = this.context_length * approxCharsPerToken;
+      const maxChars = maxTokens * approxCharsPerToken;
 
-      const cutoffIndex = Math.max(0, this.content.length - maxChars);
+      const cutoffIndex = Math.max(0, text.length - maxChars);
 
-      // Only process old content which hasn't yet been memorized
-      const newOldContent = this.content.slice(this.memory_cursor, cutoffIndex);
+      const newOldContent = text.slice(this.memory_cursor, cutoffIndex);
 
-      // Create memory only with enough relevant content
-      if (newOldContent.length < maxChars){
-        return '';
-      }
+      // Only create memory if there's enough new content
+      if (newOldContent.length < 2000) return '';
 
-      // Move cursor forward
       this.memory_cursor = cutoffIndex;
 
-      const content = 'Past Story:\n' + newOldContent;
+      return 'Past Story:\n' + newOldContent;
     },
     // Main function to continue the story with the backend API
     async continueStory() {
@@ -69,7 +65,7 @@ export default {
       try {
         const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
 
-        // Use third of the context length for plot essentials + summary and a third for recent story content
+        // Use half of the context length for plot essentials + summary and a half for recent story content
         const trimmed_context = this.trimToTokenApprox(context, this.context_length / 2);
         const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
         const full_context = 'Context:\n' + trimmed_context + '\n\n Recent Story:\n' + recent_story;
@@ -121,6 +117,7 @@ export default {
           }
         }
         // Automatically turn past context into a memory
+        this.createMemory()
       } catch (err) {
         this.status_message = 'Error continuing story: ' + err.error;
       }
@@ -168,11 +165,9 @@ export default {
       }
       try {
         // Use past story content for new memory
-        const content = 'Past Story:\n' + this.trimToPastContent(this.content, this.context_length);
+        const content = this.trimToPastContent(this.content, this.context_length / 2);
 
-        if (content.trim() == '') {
-          return;
-        }
+        if (content.trim() == '') return;
 
         const res = await fetch('http://localhost:5000/api/memorize', {
           method: 'POST',
@@ -181,7 +176,7 @@ export default {
           },
           body: JSON.stringify({
             story_id: this.story_id,
-            content: content,
+            content: 'Past Story:\n' + content,
             model: this.mem_model,
             local: this.use_local
           })
@@ -205,7 +200,6 @@ export default {
         this.status_message = 'Please enter a filename to save the story.';
         return;
       }
-      this.status_message = 'Saving story...';
       try {
         // Ensure filename ends with .json
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
@@ -229,7 +223,9 @@ export default {
           this.status_message = 'Error saving story: ' + data.error;
           return;
         }
-        this.status_message = data.message || 'Story saved.';
+        if (!auto_save) {
+          this.status_message = data.message || 'Story saved.';
+        }
       } catch (err) {
         this.status_message = 'Error saving story: ' + err.error;
       }

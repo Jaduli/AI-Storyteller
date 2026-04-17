@@ -12,12 +12,12 @@ export default {
       // Memory model used for memory and summary generation
       mem_model: 'llama-3.1-8b-instant',
       // If true, memory and summary are generated with local AI
-      use_local: false, 
-      context_length: 300,
-      auto_save: false,
+      use_local: true, 
+      context_length: 3000,
+      auto_save: true,
+      save_after_actions: 1,
       auto_summarize: true,
       summarize_after_actions: 3,
-      save_after_actions: 5,
       show_settings: false
     }
   }
