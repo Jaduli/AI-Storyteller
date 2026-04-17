@@ -5,28 +5,25 @@ export default {
     main_model: String,
     mem_model: String,
     use_local: Boolean,
-    context_length: Number,
-    auto_save: Boolean,
-    auto_summarize: Boolean,
-    summarize_after_actions: Number,
-    save_after_actions: Number
+    context_length: Number
   },
   data() {
     return {
       // Random story ID for storing memories in database
       story_id: crypto.getRandomValues(new Uint32Array(1))[0],
       // Components
+      instructions: '',
       content: '',
       summary: '',
       plot_essentials: '',
+      sent_context: '', // Context sent for story generation
       memories: '',
       status_message: '',
       // Values
-      save_action_counter: 0,
-      summarize_action_counter: 0,
       filename: '',
       active_tab: 'editor',
-      memory_cursor: 0
+      memory_cursor: 0,
+      summary_cursor: 0
     }
   },
   methods: {
@@ -48,11 +45,26 @@ export default {
       const newOldContent = text.slice(this.memory_cursor, cutoffIndex);
 
       // Only create memory if there's enough new content
-      if (newOldContent.length < 2000) return '';
+      if (newOldContent.length < 4000) return '';
 
       this.memory_cursor = cutoffIndex;
 
-      return 'Past Story:\n' + newOldContent;
+      return newOldContent;
+    },
+    trimToSummaryContent(text, maxTokens) {
+      const approxCharsPerToken = 4;
+      const maxChars = maxTokens * approxCharsPerToken;
+
+      const cutoffIndex = Math.max(0, text.length - maxChars);
+
+      const newContent = text.slice(this.summary_cursor, cutoffIndex);
+
+      // Only summarize if enough new content
+      if (newContent.length < 2000) return '';
+
+      this.summary_cursor = cutoffIndex;
+
+      return newContent;
     },
     // Main function to continue the story with the backend API
     async continueStory() {
@@ -64,11 +76,9 @@ export default {
       this.status_message = 'Continuing story...';
       try {
         const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
+        const recent_story = this.trimToTokenApprox(this.content, this.context_length);
 
-        // Use half of the context length for plot essentials + summary and a half for recent story content
-        const trimmed_context = this.trimToTokenApprox(context, this.context_length / 2);
-        const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
-        const full_context = 'Context:\n' + trimmed_context + '\n\n Recent Story:\n' + recent_story;
+        const full_context = context + '\n\nRecent Story:\n' + recent_story;
 
         const res = await fetch('http://localhost:5000/api/continue', {
           method: 'POST',
@@ -78,7 +88,8 @@ export default {
           body: JSON.stringify({
             story_id: this.story_id,
             content: full_context,
-            model: this.main_model
+            model: this.main_model,
+            instructions: this.instructions
           })
         });
         const data = await res.json();
@@ -89,6 +100,7 @@ export default {
         }
 
         this.content = this.content + '\n\n' + (data.continued_content || '');
+        this.sent_context = full_context;
         
         // Scroll to bottom to show new content
         this.$nextTick(() => {
@@ -107,33 +119,31 @@ export default {
             this.summarize_action_counter = 0; // reset counter
           }
         }
-        // Automatically save story after a set number of continue actions
-        if (this.auto_save) {
-          this.save_action_counter++;
-         
-          if (this.save_action_counter >= this.save_after_actions) {
-            await this.saveStory();
-            this.save_action_counter = 0; // reset counter
-          }
+        // Automatically save story and turn past context into a memory if file name is set
+        if (this.filename.trim() != '') {
+          await this.saveStory();
+          await this.createMemory();
+        } else {
+          this.status_message = 'Please set file name to save and memorize story.'
         }
-        // Automatically turn past context into a memory
-        this.createMemory()
+
       } catch (err) {
         this.status_message = 'Error continuing story: ' + err.error;
       }
     },
     // Function to summarize the story with the backend API
     async summarizeStory() {
-      if (!this.content || this.content.trim().length < 50) {
-        this.status_message = 'Error: Please enter enough story content to summarize.';
+      const newContent = this.trimToSummaryContent(this.content, this.context_length);
+
+      if (newContent.trim() === '') {
         return;
       }
-      this.status_message = 'Summarizing story...';
+
+      const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' 
+                            + newContent;
       try {
-        // Use half of the context length for summary and half for recent story content
-        const trimmed_summary = this.trimToTokenApprox(this.summary, this.context_length / 2);
-        const recent_story = this.trimToTokenApprox(this.content, this.context_length / 2);
-        const full_context = 'Summary:\n' + trimmed_summary + '\n\nRecent Story:\n' + recent_story;
+        const recent_story = this.trimToTokenApprox(this.content, this.context_length);
+        const full_context = 'Summary:\n' + this.summary + '\n\nRecent Story:\n' + recent_story;
 
         const res = await fetch('http://localhost:5000/api/summarize', {
           method: 'POST',
@@ -223,9 +233,6 @@ export default {
           this.status_message = 'Error saving story: ' + data.error;
           return;
         }
-        if (!auto_save) {
-          this.status_message = data.message || 'Story saved.';
-        }
       } catch (err) {
         this.status_message = 'Error saving story: ' + err.error;
       }
@@ -264,6 +271,13 @@ export default {
 <template>
   <div class="tab-header">
   <button 
+    :class="{ active: active_tab === 'instructions' }"
+    @click="active_tab = 'instructions'"
+  >
+    Instructions
+  </button>
+
+  <button 
     :class="{ active: active_tab === 'editor' }"
     @click="active_tab = 'editor'"
   >
@@ -290,8 +304,27 @@ export default {
   >
     Memories
   </button>
+
+  <button 
+    :class="{ active: active_tab === 'context' }"
+    @click="active_tab = 'context'"
+  >
+    Context
+  </button>
   </div>
+
   <div class="tab-content">
+    <div class="container" v-show="active_tab === 'instructions'">
+      <h2>Generation Instructions</h2>
+      <textarea 
+      ref="storyBox"
+      v-model="instructions" 
+      rows="15" 
+      cols="80" 
+      placeholder="Additional story generation instructions can be added here.">
+      </textarea>
+    </div>
+
     <div class="container" v-show="active_tab === 'editor'">
       <h2>Story Editor</h2>
       <textarea 
@@ -304,6 +337,7 @@ export default {
         <button @click="continueStory">Continue Story</button>
       </div>
     </div>
+
     <div class="container" v-show="active_tab === 'summary'">
       <h2>Summary</h2>
       <textarea v-model="summary" 
@@ -311,10 +345,8 @@ export default {
       cols="80" 
       placeholder="Summary will appear here. Summary will be used as context in story generation.">
       </textarea>
-      <div>
-        <button @click="summarizeStory">Summarize Story</button>
-      </div>
     </div>
+
     <div class="container" v-show="active_tab === 'essentials'">
       <h2>Plot Essentials</h2>
       <textarea v-model="plot_essentials" 
@@ -323,6 +355,7 @@ export default {
       placeholder="Key plot points, character details, or world-building elements. This will be used as context in story generation.">
       </textarea>
     </div>
+
     <div class="container" v-show="active_tab === 'memories'">
       <h2>Created Memories</h2>
       <textarea v-model="memories" 
@@ -332,13 +365,22 @@ export default {
       readonly>
       </textarea>
     </div>
+
+    <div class="container" v-show="active_tab === 'context'">
+      <h2>Sent Context</h2>
+      <textarea v-model="sent_context" 
+      rows="15" 
+      cols="80" 
+      placeholder="Context sent to story generation will show up here."
+      readonly>
+      </textarea>
+    </div>
   </div>
   <p class="status">{{ status_message}}</p>
   <div class="container">
-    <h2>Load/Save Story</h2>
+    <h2>Story File Name</h2>
     <input v-model="filename" placeholder="Enter filename" />
     <button @click="loadStory">Load Story</button>
-    <button @click="saveStory">Save Story</button>
   </div>
 </template>
 

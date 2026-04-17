@@ -111,7 +111,6 @@ def continue_story():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     content = data.get('content')
-
     if not content or content.strip() == "":
         return jsonify({"error": "Empty content."}), 400
     
@@ -122,6 +121,8 @@ def continue_story():
     story_id = data.get('story_id')
     if not story_id:
         return jsonify({"error": "Story ID is required."}), 400
+    
+    user_instructions = data.get('instructions')
 
     # Validate environment configuration
     if not api_url or not api_key:
@@ -141,13 +142,17 @@ def continue_story():
         Recent Story:
         {content}
         """
+    
+    full_instructions = GENERATION_SYS_PROMPT
+    if (user_instructions.strip() != ''):
+        full_instructions += (f"{GENERATION_SYS_PROMPT} + \n\nSpecial Instructions:\n{user_instructions}")
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     payload = {
         "model": model,
         "messages": [
-            {"role": "system", "content": GENERATION_SYS_PROMPT},
+            {"role": "system", "content": full_instructions},
             {"role": "user", "content": full_prompt}
         ],
         "max_tokens": 200,

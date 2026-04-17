@@ -13,9 +13,9 @@ export default {
       mem_model: 'llama-3.1-8b-instant',
       // If true, memory and summary are generated with local AI
       use_local: true, 
+      // Context length affects the length of recent story
+      // used as context in story generation
       context_length: 3000,
-      auto_save: true,
-      save_after_actions: 1,
       auto_summarize: true,
       summarize_after_actions: 3,
       show_settings: false
@@ -32,10 +32,6 @@ export default {
       :mem_model="mem_model"
       :use_local="use_local"
       :context_length="context_length"
-      :auto_save="auto_save"
-      :auto_summarize="auto_summarize"
-      :summarize_after_actions="summarize_after_actions"
-      :save_after_actions="save_after_actions"
     />
     <button @click="show_settings = !show_settings">
       {{ show_settings ? 'Hide Settings' : 'Show Settings' }}
@@ -47,19 +43,11 @@ export default {
       :mem_model="mem_model"
       :use_local="use_local"
       :context_length="context_length"
-      :auto_save="auto_save"
-      :auto_summarize="auto_summarize"
-      :summarize_after_actions="summarize_after_actions"
-      :save_after_actions="save_after_actions"
 
       @update:main_model="main_model = $event"
       @update:mem_model="mem_model = $event"
       @update:use_local="use_local = $event"
       @update:context_length="context_length = $event"
-      @update:auto_save="auto_save = $event"
-      @update:auto_summarize="auto_summarize = $event"
-      @update:summarize_after_actions="summarize_after_actions = $event"
-      @update:save_after_actions="save_after_actions = $event"
     />
   </div>
 </template>
