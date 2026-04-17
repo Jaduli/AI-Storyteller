@@ -110,15 +110,8 @@ export default {
 
         this.status_message = '';
 
-        // Automatically summarize after a set number of continue actions
-        if (this.auto_summarize) {
-          this.summarize_action_counter++; 
-
-          if  (this.summarize_action_counter >= this.summarize_after_actions) {
-            await this.summarizeStory();
-            this.summarize_action_counter = 0; // reset counter
-          }
-        }
+        // Automatically summarize (only happens once enough content is generated)
+        await this.summarizeStory();
         // Automatically save story and turn past context into a memory if file name is set
         if (this.filename.trim() != '') {
           await this.saveStory();
@@ -142,6 +135,7 @@ export default {
       const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' 
                             + newContent;
       try {
+        this.status_message = 'Summarizing story, please wait...'
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
         const full_context = 'Summary:\n' + this.summary + '\n\nRecent Story:\n' + recent_story;
 
@@ -163,7 +157,7 @@ export default {
           return;
         }
         this.summary = data.summary || '';
-        this.status_message = 'Story summarized.';
+        this.status_message = '';
       } catch (err) {
         this.status_message = 'Error summarizing story: ' + err.error;
       }
@@ -174,6 +168,7 @@ export default {
         return;
       }
       try {
+        this.status_message = 'Creating a new memory, please wait...'
         // Use past story content for new memory
         const content = this.trimToPastContent(this.content, this.context_length / 2);
 
@@ -197,9 +192,11 @@ export default {
           this.status_message = 'Error creating memory: ' + data.error;
           return;
         }
-        this.memories += 'Created Memory:\n'
+        this.memories += 'Created Memory:\n';
         this.memories += data.memory || '';
-        this.memories += '\n\n'
+        this.memories += '\n\n';
+
+        this.status_message = '';
       } catch (err) {
         this.status_message = 'Error creating memory: ' + err.error;
       }
@@ -220,11 +217,13 @@ export default {
           },
           body: JSON.stringify({
             filename,
+            story_id: this.story_id,
+            instructions: this.instructions,
             content: this.content,
             summary: this.summary,
             plot_essentials: this.plot_essentials,
-            story_id: this.story_id,
-            memory_cursor: this.memory_cursor
+            memory_cursor: this.memory_cursor,
+            summary_cursor: this.summary_cursor
           })
         });
         const data = await res.json();
@@ -253,11 +252,13 @@ export default {
           this.status_message = 'Error loading story: ' + data.error;
           return;
         }
+        this.story_id = data.story_id || crypto.getRandomValues(new Uint32Array(1))[0];
+        this.instructions = data.instructions || '';
         this.content = data.content || '';
         this.summary = data.summary || '';
         this.plot_essentials = data.plot_essentials || '';
-        this.story_id = data.story_id || crypto.getRandomValues(new Uint32Array(1))[0];
         this.memory_cursor = data.memory_cursor || 0;
+        this.summary_cursor = data.summary_cursor || 0;
 
         this.status_message = 'Story loaded successfully.';
       } catch (err) {

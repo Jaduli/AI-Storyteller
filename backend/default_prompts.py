@@ -11,7 +11,8 @@ Rules:
 - Do NOT explain anything outside the story.
 - Stay consistent with the established characters, tone, and plot.
 - Do NOT introduce contradictions with the provided summary, plot essentials, or recent content.
-- Keep the tone, point of view, and storytelling style consistent with recent story.
+- Keep the point of view and storytelling style consistent with recent story.
+- Do NOT repeat text.
 
 Style:
 - Match the writing style and tone of the existing story.
@@ -83,5 +84,6 @@ Quality rules:
 - Prefer fewer high-quality memories over many trivial ones.
 
 Output format:
-Plain text, no extra formatting.
+Plain text, each memory on its own line.
+No extra formatting.
 """

@@ -15,7 +15,7 @@ export default {
       use_local: true, 
       // Context length affects the length of recent story
       // used as context in story generation
-      context_length: 3000,
+      context_length: 2000,
       auto_summarize: true,
       summarize_after_actions: 3,
       show_settings: false

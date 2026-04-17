@@ -51,10 +51,12 @@ def load_file():
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             story_id = data.get("story_id")
-            memory_cursor = data.get("memory_cursor")
+            instructions = data.get("instructions", '')
             content = data.get("content", "")
             summary = data.get("summary", "None.")
             plot_essentials = data.get("plot_essentials", "None.")
+            memory_cursor = data.get("memory_cursor", 0)
+            summary_cursor = data.get("summary_cursor", 0)
     except Exception as e:
         # Internal Server Error
         return jsonify({"error": str(e)}), 500
@@ -62,8 +64,9 @@ def load_file():
     if not story_id:
         return jsonify({"error": "Story ID missing from file."}), 400
 
-    return jsonify({"story_id": story_id, "memory_cursor": memory_cursor, "content": content, 
-                    "summary": summary, "plot_essentials": plot_essentials})
+    return jsonify({"story_id": story_id, "instructions": instructions, "content": content, 
+                    "summary": summary, "plot_essentials": plot_essentials,
+                    "memory_cursor": memory_cursor, "summary_cursor":summary_cursor})
 
 """
 /save
@@ -75,11 +78,13 @@ Returns 400 if filename is missing.
 def save_file():
     data = request.json
     filename = data.get('filename')
+    story_id = data.get('story_id')
+    instructions = data.get('instructions')
     content = data.get('content')
     summary = data.get('summary', 'None.')
     plot_essentials = data.get('plot_essentials', 'None.')
-    story_id = data.get('story_id')
     memory_cursor = data.get('memory_cursor')
+    summary_cursor = data.get('summary_cursor')
 
     if not filename:
         return jsonify({"error": "Filename is required"}), 400
@@ -89,8 +94,9 @@ def save_file():
     path = os.path.join(BASE_DIR, filename)
 
     with open(path, 'w', encoding='utf-8') as f:
-        json.dump({"story_id": story_id, "memory_cursor": memory_cursor, "content": content, "summary": summary, 
-                   "plot_essentials": plot_essentials}, 
+        json.dump({"story_id": story_id, "instructions": instructions, "content": content, 
+                   "summary": summary, "plot_essentials": plot_essentials, 
+                   "memory_cursor": memory_cursor, "summary_cursor": summary_cursor}, 
                   f, ensure_ascii=False, indent=2)
 
     return jsonify({"message": "File saved as " + filename + "."})
