@@ -43,7 +43,7 @@ def init_db():
     conn.close()
 
 """
-Gets the path for where a FAISS index is stored on disk.
+Gets the path for where a FAISS index for given story_id is stored on disk.
 """
 def get_faiss_path(story_id):
     return f"/app/data/faiss_{story_id}.index"

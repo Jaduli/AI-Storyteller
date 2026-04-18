@@ -77,7 +77,7 @@ export default {
     </div>
 
     <div>
-      <label>Show Context Use: </label>
+      <label>Show Token Usage: </label>
       <input v-model="tokenVal" type="checkbox" />
     </div>
   </div>

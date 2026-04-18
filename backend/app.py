@@ -28,7 +28,7 @@ BASE_DIR = "files"
 os.makedirs(BASE_DIR, exist_ok=True)
 
 
-# Backend Functions #
+# Backend Routes #
 
 """
 /load
@@ -40,12 +40,12 @@ Returns 400 if filename or ID is missing, 404 if file not found, and 500 for oth
 def load_file():
     filename = request.args.get('filename')
     if not filename:
-        return jsonify({"error": "Filename is required"}), 400
+        return jsonify({"error": "Filename is required."}), 400
 
     path = os.path.join(BASE_DIR, filename)
 
     if not os.path.exists(path):
-        return jsonify({"error": "File not found"}), 404
+        return jsonify({"error": "File not found."}), 404
 
     try:
         with open(path, 'r', encoding='utf-8') as f:
@@ -87,9 +87,9 @@ def save_file():
     summary_cursor = data.get('summary_cursor')
 
     if not filename:
-        return jsonify({"error": "Filename is required"}), 400
+        return jsonify({"error": "Filename is required."}), 400
     if not story_id:
-        return jsonify({"error": "Story ID is required"}), 400
+        return jsonify({"error": "Story ID is required."}), 400
     
     path = os.path.join(BASE_DIR, filename)
 

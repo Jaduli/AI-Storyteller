@@ -83,7 +83,7 @@ export default {
 
         const full_context = context + '\n\nRecent Story:\n' + recent_story;
 
-        const res = await fetch('http://localhost:5000/api/continue', {
+        const res = await fetch('/api/continue', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -153,7 +153,7 @@ export default {
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
         const full_context = 'Summary:\n' + this.summary + '\n\nRecent Story:\n' + recent_story;
 
-        const res = await fetch('http://localhost:5000/api/summarize', {
+        const res = await fetch('/api/summarize', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -196,7 +196,7 @@ export default {
         this.status_message = 'Creating a new memory, please wait...'
         this.activeRequests++;
         
-        const res = await fetch('http://localhost:5000/api/memorize', {
+        const res = await fetch('/api/memorize', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -236,7 +236,7 @@ export default {
       try {
         // Ensure filename ends with .json
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
-        const res = await fetch('http://localhost:5000/api/save', {
+        const res = await fetch('/api/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -274,13 +274,9 @@ export default {
       this.activeRequests++;
       try {
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
-        const res = await fetch('http://localhost:5000/api/load?filename=' + encodeURIComponent(filename));
+        const res = await fetch('/api/load?filename=' + encodeURIComponent(filename));
         const data = await res.json();
 
-        if (data.error) {
-          this.status_message = 'Error loading story: ' + data.error;
-          return;
-        }
         this.story_id = data.story_id || crypto.getRandomValues(new Uint32Array(1))[0];
         this.instructions = data.instructions || '';
         this.content = data.content || '';
@@ -288,6 +284,11 @@ export default {
         this.plot_essentials = data.plot_essentials || '';
         this.memory_cursor = data.memory_cursor || 0;
         this.summary_cursor = data.summary_cursor || 0;
+
+        if (data.error) {
+          this.status_message = 'Back end: ' + data.error + ' New story created.';
+          return;
+        }
 
         this.status_message = 'Story loaded successfully.';
       } catch (err) {
@@ -399,7 +400,7 @@ export default {
   <p class="status">{{ status_message}}</p>
   <div class="container">
     <h2>Story File Name</h2>
-    <input v-model="filename" placeholder="Enter filename" />
+    <input v-model="filename" placeholder="Enter file name" />
     <button @click="loadStory" :disabled="is_loading">Load Story</button>
   </div>
 </template>
