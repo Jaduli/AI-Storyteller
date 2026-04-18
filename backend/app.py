@@ -142,17 +142,11 @@ def continue_story():
     if (memories != []):
         memory_block = "\n".join(memories)
 
-        full_prompt = f"""
-        Relevant Memories:
-        {memory_block}
-
-        Recent Story:
-        {content}
-        """
+        full_prompt = f"Relevant Memories:\n{memory_block}\n\n{content}"
     
     full_instructions = GENERATION_SYS_PROMPT
     if (user_instructions.strip() != ''):
-        full_instructions += (f"{GENERATION_SYS_PROMPT} + \n\nSpecial Instructions:\n{user_instructions}")
+        full_instructions = (f"{GENERATION_SYS_PROMPT}\nSpecial Instructions:\n{user_instructions}")
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
@@ -175,14 +169,15 @@ def continue_story():
 
     continued_content = result["choices"][0]["message"]["content"]
 
-    print(f"[Backend] Total API call tokens used: {result['usage']['total_tokens']}", flush=True)
-
     if not continued_content or continued_content.strip() == "":
         return jsonify({"error": "AI API returned empty content."}), 500
 
     trimmed = utils.trim_incomplete_sentences(continued_content)
 
-    return jsonify({"continued_content": trimmed})
+    full_context = '[SYSTEM]\n' + full_instructions + '\n\n[USER]\n\n' + full_prompt
+
+    return jsonify({"continued_content": trimmed, "tokens_total": result['usage']['total_tokens'],
+                    "full_context": full_context})
 
 """
 /summarize
@@ -209,6 +204,7 @@ def summarize():
         return jsonify({"error": "Model is required."}), 400
     
     new_summary = ""
+    tokens_total = -1
 
     if (local and local == True):
         # Local summarization using Ollama API
@@ -229,9 +225,8 @@ def summarize():
 
             new_summary = data.get("message", {}).get("content", "").strip()
 
-            total_tokens = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+            tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
 
-            print(f"[Backend] Total local tokens used: {total_tokens}", flush=True)
         else:
             return {"error": response.text}, response.status_code
     # Default to cloud  
@@ -259,11 +254,11 @@ def summarize():
 
         new_summary = result["choices"][0]["message"]["content"]
 
-        print(f"[Backend] Total API call tokens used: {result['usage']['total_tokens']}", flush=True)
+        tokens_total = result['usage']['total_tokens']
 
     trimmed = utils.trim_incomplete_sentences(new_summary)
 
-    return jsonify({"summary": trimmed})
+    return jsonify({"summary": trimmed, "tokens_total": tokens_total})
 
 @app.route('/api/memorize', methods=['POST'])
 def memorize():
@@ -286,6 +281,7 @@ def memorize():
         return jsonify({"error": "Story ID is required."}), 400
     
     new_memory = ""
+    tokens_total = -1
 
     if (local and local == True):
         # Local memorization using Ollama API
@@ -307,9 +303,8 @@ def memorize():
 
             new_memory = data.get("message", {}).get("content", "").strip()
 
-            total_tokens = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+            tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
 
-            print(f"[Backend] Total local tokens used: {total_tokens}", flush=True)
         else:
             return {"error": response.text}, response.status_code
     # Default to cloud
@@ -338,13 +333,13 @@ def memorize():
 
         new_memory = result["choices"][0]["message"]["content"]
 
-        print(f"[Backend] Total API call tokens used: {result['usage']['total_tokens']}", flush=True)
+        tokens_total = result['usage']['total_tokens']
 
     trimmed = utils.trim_incomplete_sentences(new_memory)
 
     database.create_memory(story_id, trimmed)
 
-    return jsonify({"memory": trimmed})
+    return jsonify({"memory": trimmed, "tokens_total": tokens_total})
 
 
 if __name__ == '__main__':

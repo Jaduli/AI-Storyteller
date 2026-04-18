@@ -13,11 +13,11 @@ export default {
       mem_model: 'llama-3.1-8b-instant',
       // If true, memory and summary are generated with local AI
       use_local: true, 
+      // If true, show total tokens used for all AI API calls
+      show_token_use: false,
       // Context length affects the length of recent story
       // used as context in story generation
-      context_length: 2000,
-      auto_summarize: true,
-      summarize_after_actions: 3,
+      context_length: 1000,
       show_settings: false
     }
   }
@@ -31,6 +31,7 @@ export default {
       :main_model="main_model"
       :mem_model="mem_model"
       :use_local="use_local"
+      :show_token_use="show_token_use"
       :context_length="context_length"
     />
     <button @click="show_settings = !show_settings">
@@ -42,11 +43,13 @@ export default {
       :main_model="main_model"
       :mem_model="mem_model"
       :use_local="use_local"
+      :show_token_use="show_token_use"
       :context_length="context_length"
 
       @update:main_model="main_model = $event"
       @update:mem_model="mem_model = $event"
       @update:use_local="use_local = $event"
+      @update:show_token_use="show_token_use = $event"
       @update:context_length="context_length = $event"
     />
   </div>

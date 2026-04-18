@@ -5,6 +5,7 @@ export default {
     main_model: String,
     mem_model: String,
     use_local: Boolean,
+    show_token_use: Boolean,
     context_length: Number
   },
   computed: {
@@ -28,6 +29,10 @@ export default {
         const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant'
         this.$emit('update:mem_model', value)
       }
+    },
+    tokenVal: {
+      get() { return this.show_token_use },
+      set(v) { this.$emit('update:show_token_use', v) }
     },
     localVal: {
       get() { return this.use_local },
@@ -67,8 +72,13 @@ export default {
     </div>
 
     <div>
-      <label>Context Length: </label>
+      <label>Recent Story Token Usage: </label>
       <input v-model.number="contextLengthVal" type="number" />
+    </div>
+
+    <div>
+      <label>Show Context Use: </label>
+      <input v-model="tokenVal" type="checkbox" />
     </div>
   </div>
 </template>

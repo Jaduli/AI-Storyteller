@@ -5,6 +5,7 @@ export default {
     main_model: String,
     mem_model: String,
     use_local: Boolean,
+    show_token_use: Boolean,
     context_length: Number
   },
   data() {
@@ -12,18 +13,19 @@ export default {
       // Random story ID for storing memories in database
       story_id: crypto.getRandomValues(new Uint32Array(1))[0],
       // Components
-      instructions: '',
+      instructions: '', // Special instructions for the AI to use
       content: '',
       summary: '',
       plot_essentials: '',
-      sent_context: '', // Context sent for story generation
-      memories: '',
+      sent_context: '', // Full context sent for story generation
       status_message: '',
       // Values
       filename: '',
       active_tab: 'editor',
+      is_loading: false,
+      activeRequests: 0,
       memory_cursor: 0,
-      summary_cursor: 0
+      summary_cursor: 0,
     }
   },
   methods: {
@@ -74,6 +76,7 @@ export default {
         return;
       }
       this.status_message = 'Continuing story...';
+      this.activeRequests++;
       try {
         const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
@@ -100,7 +103,11 @@ export default {
         }
 
         this.content = this.content + '\n\n' + (data.continued_content || '');
-        this.sent_context = full_context;
+        
+        // Display full context used in API call
+        if (data.full_context) {
+          this.sent_context = data.full_context;
+        }
         
         // Scroll to bottom to show new content
         this.$nextTick(() => {
@@ -110,8 +117,12 @@ export default {
 
         this.status_message = '';
 
+        if (this.show_token_use && data.tokens_total) {
+          this.status_message = 'Total tokens used for continue action: ' + data.tokens_total
+        }
         // Automatically summarize (only happens once enough content is generated)
         await this.summarizeStory();
+
         // Automatically save story and turn past context into a memory if file name is set
         if (this.filename.trim() != '') {
           await this.saveStory();
@@ -119,9 +130,10 @@ export default {
         } else {
           this.status_message = 'Please set file name to save and memorize story.'
         }
-
       } catch (err) {
-        this.status_message = 'Error continuing story: ' + err.error;
+        this.status_message = 'Error continuing story: ' + (err.message || err);
+      } finally {
+        this.activeRequests--;
       }
     },
     // Function to summarize the story with the backend API
@@ -134,8 +146,10 @@ export default {
 
       const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' 
                             + newContent;
+
+      this.status_message = 'Summarizing story, please wait...'
+      this.activeRequests++;
       try {
-        this.status_message = 'Summarizing story, please wait...'
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
         const full_context = 'Summary:\n' + this.summary + '\n\nRecent Story:\n' + recent_story;
 
@@ -158,8 +172,14 @@ export default {
         }
         this.summary = data.summary || '';
         this.status_message = '';
+
+        if (this.show_token_use && data.tokens_total) {
+          this.status_message = 'Total tokens used for summary action: ' + data.tokens_total
+        }
       } catch (err) {
-        this.status_message = 'Error summarizing story: ' + err.error;
+        this.status_message = 'Error summarizing story: ' + (err.message || err);
+      } finally {
+        this.activeRequests--;
       }
     },
     // Function to create a memory with the backend API
@@ -168,12 +188,14 @@ export default {
         return;
       }
       try {
-        this.status_message = 'Creating a new memory, please wait...'
         // Use past story content for new memory
         const content = this.trimToPastContent(this.content, this.context_length / 2);
 
-        if (content.trim() == '') return;
+        if (content.trim() === '') return;
 
+        this.status_message = 'Creating a new memory, please wait...'
+        this.activeRequests++;
+        
         const res = await fetch('http://localhost:5000/api/memorize', {
           method: 'POST',
           headers: {
@@ -192,13 +214,16 @@ export default {
           this.status_message = 'Error creating memory: ' + data.error;
           return;
         }
-        this.memories += 'Created Memory:\n';
-        this.memories += data.memory || '';
-        this.memories += '\n\n';
 
         this.status_message = '';
+
+        if (this.show_token_use && data.tokens_total) {
+          this.status_message = 'Total tokens used for memory action: ' + data.tokens_total
+        }
       } catch (err) {
-        this.status_message = 'Error creating memory: ' + err.error;
+        this.status_message = 'Error creating memory: ' + (err.message || err);
+      } finally {
+        this.activeRequests--;
       }
     },
     // Function to save the story to the backend API
@@ -207,6 +232,7 @@ export default {
         this.status_message = 'Please enter a filename to save the story.';
         return;
       }
+      this.activeRequests++;
       try {
         // Ensure filename ends with .json
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
@@ -233,7 +259,9 @@ export default {
           return;
         }
       } catch (err) {
-        this.status_message = 'Error saving story: ' + err.error;
+        this.status_message = 'Error saving story: ' + (err.message || err);
+      } finally {
+        this.activeRequests--;
       }
     },
     // Function to load the story from backend API
@@ -243,6 +271,7 @@ export default {
         return;
       }
       this.status_message = 'Loading story...';
+      this.activeRequests++;
       try {
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
         const res = await fetch('http://localhost:5000/api/load?filename=' + encodeURIComponent(filename));
@@ -262,8 +291,16 @@ export default {
 
         this.status_message = 'Story loaded successfully.';
       } catch (err) {
-        this.status_message = 'Error loading story: ' + err.error;
+        this.status_message = 'Error loading story: ' + (err.message || err);
+      } finally {
+        this.activeRequests--;
       }
+    }
+  },
+  computed: {
+    // Set state to loading if any active request is in process
+    is_loading() {
+      return this.activeRequests > 0;
     }
   }
 }
@@ -300,13 +337,6 @@ export default {
   </button>
 
   <button 
-    :class="{ active: active_tab === 'memories' }"
-    @click="active_tab = 'memories'"
-  >
-    Memories
-  </button>
-
-  <button 
     :class="{ active: active_tab === 'context' }"
     @click="active_tab = 'context'"
   >
@@ -318,7 +348,6 @@ export default {
     <div class="container" v-show="active_tab === 'instructions'">
       <h2>Generation Instructions</h2>
       <textarea 
-      ref="storyBox"
       v-model="instructions" 
       rows="15" 
       cols="80" 
@@ -335,7 +364,7 @@ export default {
       cols="80" 
       placeholder="Paste or write story text here"></textarea>
       <div>
-        <button @click="continueStory">Continue Story</button>
+        <button @click="continueStory" :disabled="is_loading">Continue Story</button>
       </div>
     </div>
 
@@ -357,16 +386,6 @@ export default {
       </textarea>
     </div>
 
-    <div class="container" v-show="active_tab === 'memories'">
-      <h2>Created Memories</h2>
-      <textarea v-model="memories" 
-      rows="15" 
-      cols="80" 
-      placeholder="New memories will show up here."
-      readonly>
-      </textarea>
-    </div>
-
     <div class="container" v-show="active_tab === 'context'">
       <h2>Sent Context</h2>
       <textarea v-model="sent_context" 
@@ -381,7 +400,7 @@ export default {
   <div class="container">
     <h2>Story File Name</h2>
     <input v-model="filename" placeholder="Enter filename" />
-    <button @click="loadStory">Load Story</button>
+    <button @click="loadStory" :disabled="is_loading">Load Story</button>
   </div>
 </template>
 

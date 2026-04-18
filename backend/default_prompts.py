@@ -49,7 +49,7 @@ Instructions:
 - Ensure the summary is clear, concise, and captures the essence of the story so far.
 
 Output:
-Less than 300 words of plain text.
+Less than 200 words of plain text.
 """
 
 # Memory
@@ -83,7 +83,13 @@ Quality rules:
 - Avoid redundancy.
 - Prefer fewer high-quality memories over many trivial ones.
 
-Output format:
-Plain text, each memory on its own line.
-No extra formatting.
+Output format (STRICT):
+- Return ONLY the memory lines.
+- Each memory must be on its own line.
+- No introduction, no explanation, no summary.
+- Do NOT include phrases like "Here are", "Memories:", or similar.
+- Do NOT include numbering, bullet points, or labels.
+- Do NOT include empty lines before or after the output.
+
+If any non-memory text is included, the output is invalid.
 """
