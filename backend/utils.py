@@ -39,7 +39,7 @@ def call_ai_api(api_url, headers, payload):
             return None, ("Rate limit exceeded. Wait or increase rate limit.", 429)
 
         if response.status_code == 401:
-            return None, ("Unauthorized. Check your API key.", 401)
+            return None, ("Unauthorized. Check your API key and permissions.", 401)
 
         if response.status_code >= 500:
             return None, ("AI service is currently unavailable.", 503)

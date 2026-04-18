@@ -41,4 +41,4 @@ AI USAGE INFORMATION
 
 This program has been made in VSCode with GitHub Copilot (free version for TUNI students) tuned on. Model used is GPT-5 mini. Copilot has helped with debugging problematic code and generating useful functions such as for trimming text. AI has NOT been used in the overall structure, project idea, or technology selection.
 
-Prompts for story generation (in backend/default_prompts.py) have been improved with the help of ChatGPT-5. As Faiss is a new technology for me, ChatGPT-5 has also been used to help generate and understand code found in backend/database.py.
+Prompts for story generation (in backend/default_prompts.py) have been improved with the help of ChatGPT-5. As FAISS is a new technology for me, ChatGPT-5 has also been used to help generate and understand code found in backend/database.py.

@@ -33,8 +33,9 @@ os.makedirs(BASE_DIR, exist_ok=True)
 """
 /load
 
-Load story file ID, content, summary, and plot essentials. 
-Returns 400 if filename or ID is missing, 404 if file not found, and 500 for other errors.
+Load story file by filename. 
+Returns 400 if filename or story_id is missing, 404 if file not found, 
+and 500 for other errors.
 """
 @app.route('/api/load', methods=['GET'])
 def load_file():
@@ -72,7 +73,7 @@ def load_file():
 /save
 
 Save story file content, summary, and plot essentials. 
-Returns 400 if filename is missing.
+Returns 400 if filename or story_id is missing.
 """
 @app.route('/api/save', methods=['POST'])
 def save_file():
@@ -107,7 +108,7 @@ def save_file():
 Continue story using external AI API. 
 Returns 400 for missing/invalid JSON, empty content, or missing model; 
 API call errors with appropriate status codes (from utils.call_ai_api);
-500 for server or API errors, or if AI API returns empty content.
+500 for server or API key errors, or if AI API returns empty content.
 """
 @app.route('/api/continue', methods=['POST'])
 def continue_story():
@@ -185,7 +186,7 @@ def continue_story():
 Summarize story using external or local AI API.
 Returns 400 for missing/invalid JSON, empty content, or missing model;
 API call errors with appropriate status codes (from utils.call_ai_api);
-500 for server or API errors, or if AI API returns empty summary.
+500 for server or API key errors, or if AI API returns empty summary.
 """
 @app.route('/api/summarize', methods=['POST'])
 def summarize():
@@ -260,6 +261,14 @@ def summarize():
 
     return jsonify({"summary": trimmed, "tokens_total": tokens_total})
 
+"""
+/memorize
+
+Creates a memory using local or cloud AI. Memory is stored in the database.
+Returns 400 for missing/invalid JSON, empty content, or missing model or story_id; 
+API call errors with appropriate status codes (from utils.call_ai_api);
+500 for server or API key errors, or if AI API returns empty content.
+"""
 @app.route('/api/memorize', methods=['POST'])
 def memorize():
     data = request.get_json(silent=True)

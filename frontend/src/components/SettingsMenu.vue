@@ -30,13 +30,13 @@ export default {
         this.$emit('update:mem_model', value)
       }
     },
-    tokenVal: {
-      get() { return this.show_token_use },
-      set(v) { this.$emit('update:show_token_use', v) }
-    },
     localVal: {
       get() { return this.use_local },
       set(v) { this.$emit('update:use_local', v) }
+    },
+    tokenVal: {
+      get() { return this.show_token_use },
+      set(v) { this.$emit('update:show_token_use', v) }
     },
     contextLengthVal: {
       get() { return this.context_length },
@@ -77,7 +77,7 @@ export default {
     </div>
 
     <div>
-      <label>Show Token Usage: </label>
+      <label>Show API Call Token Usage: </label>
       <input v-model="tokenVal" type="checkbox" />
     </div>
   </div>
