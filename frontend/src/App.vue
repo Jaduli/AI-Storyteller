@@ -16,7 +16,7 @@ export default {
       // If true, show total tokens used for all AI API calls
       show_token_use: false,
       // Context length affects the length of recent story
-      // used as context in story generation
+      // used as context in story generation (in tokens)
       context_length: 1000,
       show_settings: false
     }

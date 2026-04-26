@@ -72,7 +72,7 @@ export default {
     </div>
 
     <div>
-      <label>Recent Story Token Usage: </label>
+      <label>Recent Story Token Limit: </label>
       <input v-model.number="contextLengthVal" type="number" />
     </div>
 

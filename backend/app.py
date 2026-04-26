@@ -34,17 +34,28 @@ os.makedirs(BASE_DIR, exist_ok=True)
 /load
 
 Load story file by filename. 
-Returns 400 if filename or story_id is missing, 404 if file not found, 
-and 500 for other errors.
+Returns 400 if filename or story_id is missing or invalid, 
+404 if file not found, and 500 for other errors.
 """
 @app.route('/api/load', methods=['GET'])
 def load_file():
     filename = request.args.get('filename')
     if not filename:
         return jsonify({"error": "Filename is required."}), 400
+    
+    # Basic validation to prevent directory traversal or invalid filenames.
+    # Only allow .json files.
+    if not re.match(r'^[a-zA-Z0-9_-]+\.json$', filename):
+        return jsonify({"error": "Invalid filename."}), 400
 
     path = os.path.join(BASE_DIR, filename)
 
+    # Ensure the real path is within the BASE_DIR to prevent directory traversal
+    real_path = os.path.realpath(path)
+    if not real_path.startswith(os.path.realpath(BASE_DIR)):
+        return jsonify({"error": "Invalid path."}), 400
+
+    # Ensure file exists before attempting to open
     if not os.path.exists(path):
         return jsonify({"error": "File not found."}), 404
 
@@ -72,8 +83,8 @@ def load_file():
 """
 /save
 
-Save story file content, summary, and plot essentials. 
-Returns 400 if filename or story_id is missing.
+Save story to file. Filename and story_id are required. 
+Returns 400 if filename or story_id is missing. 
 """
 @app.route('/api/save', methods=['POST'])
 def save_file():
@@ -92,7 +103,17 @@ def save_file():
     if not story_id:
         return jsonify({"error": "Story ID is required."}), 400
     
+    # Basic validation to prevent directory traversal or invalid filenames.
+    # Only allow .json files.
+    if not re.match(r'^[a-zA-Z0-9_-]+\.json$', filename):
+        return jsonify({"error": "Invalid filename."}), 400
+    
     path = os.path.join(BASE_DIR, filename)
+
+    # Ensure the real path is within the BASE_DIR to prevent directory traversal
+    real_path = os.path.realpath(path)
+    if not real_path.startswith(os.path.realpath(BASE_DIR)):
+        return jsonify({"error": "Invalid path."}), 400
 
     with open(path, 'w', encoding='utf-8') as f:
         json.dump({"story_id": story_id, "instructions": instructions, "content": content, 
@@ -158,7 +179,7 @@ def continue_story():
             {"role": "user", "content": full_prompt}
         ],
         "max_tokens": 200,
-        "temperature": 0.7
+        "temperature": 1.5
     }
 
     # Call external AI API with error handling

@@ -23,50 +23,54 @@ export default {
       filename: '',
       active_tab: 'editor',
       is_loading: false,
-      activeRequests: 0,
+      active_requests: 0,
       memory_cursor: 0,
       summary_cursor: 0,
+      // Editable content displayed in story editor
+      story_editor_content: '',
     }
   },
   methods: {
     // Helper function to trim text to approximate token length
-    trimToTokenApprox(text, maxTokens) {
+    trimToTokenApprox(text, max_tokens) {
       // Approximate to 4 characters per token (may vary based on language and content)
-      const approxCharsPerToken = 4;
-      const maxChars = maxTokens * approxCharsPerToken;
+      const approx_chars_per_token = 4;
+      const max_chars = max_tokens * approx_chars_per_token;
 
-      return text.slice(-maxChars);
+      return text.slice(-max_chars);
     },
     // Helper function to trim past content for memory creation
-    trimToPastContent(text, maxTokens) {
-      const approxCharsPerToken = 4;
-      const maxChars = maxTokens * approxCharsPerToken;
+    trimToPastContent(text, max_tokens) {
+      const approx_chars_per_token = 4;
+      const max_chars = max_tokens * approx_chars_per_token;
 
-      const cutoffIndex = Math.max(0, text.length - maxChars);
+      const cutoff_index = Math.max(0, text.length - max_chars);
 
-      const newOldContent = text.slice(this.memory_cursor, cutoffIndex);
+      const memory_content = text.slice(this.memory_cursor, cutoff_index);
 
-      // Only create memory if there's enough new content
-      if (newOldContent.length < 4000) return '';
+      // Only create memory if there's enough content to memorize
+      if (memory_content.length < 4000) return '';
 
-      this.memory_cursor = cutoffIndex;
+      // Move memory cursor forward to cutoff index for next memory
+      this.memory_cursor = cutoff_index;
 
-      return newOldContent;
+      return memory_content;
     },
-    trimToSummaryContent(text, maxTokens) {
-      const approxCharsPerToken = 4;
-      const maxChars = maxTokens * approxCharsPerToken;
+    trimToSummaryContent(text, max_tokens) {
+      const approx_chars_per_token = 4;
+      const max_chars = max_tokens * approx_chars_per_token;
 
-      const cutoffIndex = Math.max(0, text.length - maxChars);
+      const cutoff_index = Math.max(0, text.length - max_chars + 1000); // Add some buffer to prevent losing content before next summary
 
-      const newContent = text.slice(this.summary_cursor, cutoffIndex);
+      const new_content = text.slice(this.summary_cursor, cutoff_index);
 
-      // Only summarize if enough new content
-      if (newContent.length < 2000) return '';
+      // Only summarize if there's enough new content to summarize
+      if (new_content.length < 2000) return '';
 
-      this.summary_cursor = cutoffIndex;
+      // Move summary cursor forward to cutoff index for next summary
+      this.summary_cursor = cutoff_index;
 
-      return newContent;
+      return new_content;
     },
     // Main function to continue the story with the backend API
     async continueStory() {
@@ -75,9 +79,10 @@ export default {
         this.status_message = 'Error: Please enter enough story content to continue.';
         return;
       }
-      this.status_message = 'Continuing story...';
-      this.activeRequests++;
       try {
+        this.status_message = 'Continuing story...';
+        this.active_requests++;
+
         const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
 
@@ -133,25 +138,23 @@ export default {
       } catch (err) {
         this.status_message = 'Error continuing story: ' + (err.message || err);
       } finally {
-        this.activeRequests--;
+        this.active_requests--;
       }
     },
     // Function to summarize the story with the backend API
     async summarizeStory() {
-      const newContent = this.trimToSummaryContent(this.content, this.context_length);
+      const new_content = this.trimToSummaryContent(this.content, this.context_length);
 
-      if (newContent.trim() === '') {
+      if (new_content.trim() === '') {
         return;
       }
 
-      const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' 
-                            + newContent;
-
-      this.status_message = 'Summarizing story, please wait...'
-      this.activeRequests++;
       try {
+        this.status_message = 'Summarizing story, please wait...'
+        this.active_requests++;
+
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
-        const full_context = 'Summary:\n' + this.summary + '\n\nRecent Story:\n' + recent_story;
+        const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' + recent_story;
 
         const res = await fetch('/api/summarize', {
           method: 'POST',
@@ -179,7 +182,7 @@ export default {
       } catch (err) {
         this.status_message = 'Error summarizing story: ' + (err.message || err);
       } finally {
-        this.activeRequests--;
+        this.active_requests--;
       }
     },
     // Function to create a memory with the backend API
@@ -187,14 +190,13 @@ export default {
       if (!this.content || this.content.trim().length < 50) {
         return;
       }
+      // Use past story content for new memory
+      const content = this.trimToPastContent(this.content, this.context_length / 2);
+
+      if (content.trim() === '') return;
       try {
-        // Use past story content for new memory
-        const content = this.trimToPastContent(this.content, this.context_length / 2);
-
-        if (content.trim() === '') return;
-
+        this.active_requests++;
         this.status_message = 'Creating a new memory, please wait...'
-        this.activeRequests++;
         
         const res = await fetch('/api/memorize', {
           method: 'POST',
@@ -223,7 +225,7 @@ export default {
       } catch (err) {
         this.status_message = 'Error creating memory: ' + (err.message || err);
       } finally {
-        this.activeRequests--;
+        this.active_requests--;
       }
     },
     // Function to save the story to the backend API
@@ -232,8 +234,9 @@ export default {
         this.status_message = 'Please enter a filename to save the story.';
         return;
       }
-      this.activeRequests++;
       try {
+        this.active_requests++;
+
         // Ensure filename ends with .json
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
         const res = await fetch('/api/save', {
@@ -261,7 +264,7 @@ export default {
       } catch (err) {
         this.status_message = 'Error saving story: ' + (err.message || err);
       } finally {
-        this.activeRequests--;
+        this.active_requests--;
       }
     },
     // Function to load the story from backend API
@@ -270,9 +273,10 @@ export default {
         this.status_message = 'Please enter a filename to load the story.';
         return;
       }
-      this.status_message = 'Loading story...';
-      this.activeRequests++;
       try {
+        this.active_requests++;
+        this.status_message = 'Loading story...';
+
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
         const res = await fetch('/api/load?filename=' + encodeURIComponent(filename));
         const data = await res.json();
@@ -289,19 +293,46 @@ export default {
           this.status_message = 'Back end: ' + data.error + ' New story created.';
           return;
         }
+        // Scroll to bottom after loading story
+        this.$nextTick(() => {
+          const el = this.$refs.storyBox;
+          el.scrollTop = el.scrollHeight;
+        });
 
         this.status_message = 'Story loaded successfully.';
       } catch (err) {
         this.status_message = 'Error loading story: ' + (err.message || err);
       } finally {
-        this.activeRequests--;
+        this.active_requests--;
       }
+    },
+    // Update content from story_editor_content after user edit/input
+    onEditorInput(e) {
+      const start = this.displayStart;
+      const new_text = e.target.value;
+
+      this.story_editor_content = new_text;
+      this.content = this.content.slice(0, start) + new_text;
     }
   },
   computed: {
     // Set state to loading if any active request is in process
-    is_loading() {
-      return this.activeRequests > 0;
+    isLoading() {
+      return this.active_requests > 0;
+    },
+    // Calculate where to start displaying content in editor based on context length
+    displayStart() {
+      const approx_chars_per_token = 4;
+      const max_chars = this.context_length * approx_chars_per_token;
+
+      return Math.max(0, this.content.length - max_chars);
+    }
+  },
+  watch: {
+    // Update story_editor_content when content changes
+    content() {
+      const start = this.displayStart;
+      this.story_editor_content = this.content.slice(start);
     }
   }
 }
@@ -360,12 +391,13 @@ export default {
       <h2>Story Editor</h2>
       <textarea 
       ref="storyBox"
-      v-model="content" 
+      v-model="story_editor_content" 
+      @input="onEditorInput"
       rows="15" 
       cols="80" 
       placeholder="Paste or write story text here"></textarea>
       <div>
-        <button @click="continueStory" :disabled="is_loading">Continue Story</button>
+        <button @click="continueStory" :disabled="isLoading">Continue Story</button>
       </div>
     </div>
 
@@ -401,7 +433,7 @@ export default {
   <div class="container">
     <h2>Story File Name</h2>
     <input v-model="filename" placeholder="Enter file name" />
-    <button @click="loadStory" :disabled="is_loading">Load Story</button>
+    <button @click="loadStory" :disabled="isLoading">Load Story</button>
   </div>
 </template>
 
