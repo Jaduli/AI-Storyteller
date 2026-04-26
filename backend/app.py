@@ -3,7 +3,6 @@ from flask_cors import CORS
 import json
 import requests
 import re
-from dotenv import load_dotenv
 import os
 from default_prompts import GENERATION_SYS_PROMPT, SUMMARIZATION_SYS_PROMPT, MEMORY_SYS_PROMPT
 import utils
@@ -238,10 +237,16 @@ def continue_story():
         "max_tokens": max_tokens,
         "top_p": top_p,
         "temperature": temperature,
-        "presence_penalty": 0.3, # Increases the likelihood of introducing new content vs repeating existing content.
-        "frequency_penalty": 0.3, # Decreases the likelihood of repeating words or phrases.
-        "thinking": {"type": "disabled"} # Disable "thinking" phase to greatly reduce token use and speed up responses.
+        "presence_penalty": 0.3,
+        "frequency_penalty": 0.3
     }
+
+    # Disable "thinking" phase for DeepSeek models to reduce output token use 
+    # -> cheaper responses.
+    # Can be removed for better storytelling quality if cost is not a concern.
+    # May become redundant if model names are changed by API provider.
+    if model in ("deepseek-v4-flash", "deepseek-v4-pro"):
+        payload["thinking"] = {"type": "disabled"}
 
     # Call external AI API with error handling
     result, error = utils.call_ai_api(api_url, headers, payload)
@@ -257,7 +262,7 @@ def continue_story():
 
     trimmed = utils.trim_incomplete_sentences(continued_content)
 
-    full_context = '[SYSTEM]\n' + full_instructions + '\n\n[USER]\n\n' + full_prompt
+    full_context = '{---SYSTEM---}\n' + full_instructions + '\n\n{---USER---}\n\n' + full_prompt
 
     return jsonify({"continued_content": trimmed, "tokens_total": result['usage']['total_tokens'],
                     "full_context": full_context})

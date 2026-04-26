@@ -163,8 +163,8 @@ export default {
       }
 
       try {
-        this.status_message = 'Summarizing story, please wait...'
         this.active_requests++;
+        this.status_message = 'Summarizing story, please wait...'
 
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
         const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' + recent_story;
@@ -274,6 +274,10 @@ export default {
           this.status_message = 'Error saving story: ' + data.error;
           return;
         }
+        // Only show success message if this is the only active request to avoid confusion with other actions
+        if (this.active_requests === 1 && data.message) {
+          this.status_message = 'Story saved successfully: ' + data.message;
+        }
       } catch (err) {
         this.status_message = 'Error saving story: ' + (err.message || err);
       } finally {
@@ -329,11 +333,15 @@ export default {
     }
   },
   computed: {
-    // Set state to loading if any active request is in process
+    // Set state to loading if any active request is in process.
+    // This disables continue, save, and load buttons to prevent multiple simultaneous 
+    // requests which can cause issues.
     isLoading() {
       return this.active_requests > 0;
     },
-    // Calculate where to start displaying content in editor based on context length
+    // Calculate where to start displaying content in editor based on context length.
+    // This prevents editing already memorized or summarized content and makes textEditor
+    // more responsive by not rendering the entire story in the editor.
     displayStart() {
       const approx_chars_per_token = 4;
       const max_chars = this.context_length * approx_chars_per_token;
