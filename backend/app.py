@@ -249,7 +249,7 @@ def continue_story():
     # Can be removed for better storytelling quality if cost is not a concern.
     # May become redundant if model names are changed by API provider.
     if model in ("deepseek-v4-flash", "deepseek-v4-pro"):
-        payload["extra_body"] = {"thinking": {"type": "disabled"}}
+        payload["thinking"] = {"type": "disabled"}
 
     # Call external AI API with error handling
     result, error = utils.call_ai_api(api_url, headers, payload)
