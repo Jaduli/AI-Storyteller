@@ -12,13 +12,25 @@ export default {
       // Memory model used for memory and summary generation
       mem_model: 'llama-3.1-8b-instant',
       // If true, memory and summary are generated with local AI
-      use_local: true, 
+      use_local: false, 
       // If true, show total tokens used for all AI API calls
       show_token_use: false,
       // Context length affects the length of recent story
       // used as context in story generation (in tokens)
       context_length: 1000,
-      show_settings: false
+      show_settings: false,
+      show_local_toggle: false
+    }
+  },
+  async mounted() {
+    try {
+      // Load config from backend to check if local AI is enabled
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      this.use_local = data.local_ai_enabled;
+      this.show_local_toggle = data.local_ai_enabled;
+    } catch (err) {
+      console.error('Failed to load config', err);
     }
   }
 }
@@ -42,6 +54,7 @@ export default {
       
       :main_model="main_model"
       :mem_model="mem_model"
+      :show_local_toggle="show_local_toggle"
       :use_local="use_local"
       :show_token_use="show_token_use"
       :context_length="context_length"

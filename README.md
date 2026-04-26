@@ -4,7 +4,9 @@ RUNNING INSTRUCTIONS
 
 Docker is required to run the app: https://www.docker.com/products/docker-desktop/.
 
-With Docker running, navigate to "AI-Storyteller" folder in your terminal and run "docker-compose up --build" to start the app. NOTE! The full container takes about 30-35 GB to run, mainly due to AI models and Docker images. First time set up may take 20+ minutes to compose depending on your internet connection.
+With Docker running, navigate to "AI-Storyteller" folder in your terminal and run `docker-compose up --build` to start the app without local AI (all AI use is done with the external AI API). If you have an NVIDIA GPU with at least 8 GB of VRAM, you can run the app with a local AI for summary and memory actions with the command `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build`. Running the AI locally will reduce external API rate limits and cost.
+
+NOTE! The full container takes about 25-35 GB to run, mainly due to Docker images and a local AI model (only installed if run on GPU mode). First time set up may take 20+ minutes to compose depending on selected mode and your internet connection.
 
 Add your cloud AI API key and URL to backend/.env. The API key is ONLY used for API calls to your selected AI. 
 
@@ -12,16 +14,20 @@ Example AI, GroqCloud:
 https://console.groq.com/home
 API URL: https://api.groq.com/openai/v1/chat/completions
 
+Best price/quality AI, DeepSeek:
+https://platform.deepseek.com/
+Model name & Pricing can be found here:
+https://api-docs.deepseek.com/quick_start/pricing
+API URL: https://api.deepseek.com/chat/completions
+
 
 GENERATION INSRUCTIONS
 
-Once you have the app running, begin a story by writing in the editor or load a previous story with its file name. Click on 'Continue Story' for the AI to continue the story from where it left off. The AI uses all of summary and plot essentials and up to two most relevant memories for context. Length of recent story used in context can be adjusted in the settings-menu. You may enable a setting to display total tokens used in each API call.
+Once you have the app running, begin a story by writing in the editor or load a previous story with its file name. Click on 'Continue Story' for the AI to continue the story from where it left off. The AI uses all of summary and plot essentials and up to two most relevant memories for context. Length of recent story used in context can be adjusted in the settings-menu (has no effect on summary or story essentials, both of which will always be included in full). You may enable a setting to display total tokens used in each API call.
 
-Additional story generation instructions can be in the Instructions tab. Default prompts for story/summary generation can be found in backend/default_prompts.py file. Full contex sent to the AI in a continue action can be seen in the Context tab.
+Additional story generation instructions, such as storytelling style or content restrictions, can be written in the Instructions tab. Default prompts for story/summary generation can be found in backend/default_prompts.py file. By default, there are no safeguards for generated content beyond the model and API's own guardrails. Full contex sent to the AI in a Continue-action can be seen in the Context tab.
 
-NOTE! Running summary and memory generation with local AI requires an NVIDIA GPU with at least 8 GB of VRAM.
-
-The story is saved after every continue action. Saved files can be found in backend/files. Memories in the database are tracked by using Story IDs.
+The story is saved after every continue action. Saved files can be found in backend/files. Memories in the database are tracked by using randomized Story IDs.
 
 
 PROJECT INFORMATION

@@ -56,6 +56,7 @@ export default {
 
       return memory_content;
     },
+    // Helper function to trim past content for summary creation
     trimToSummaryContent(text, max_tokens) {
       const approx_chars_per_token = 4;
       const max_chars = max_tokens * approx_chars_per_token;

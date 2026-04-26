@@ -5,6 +5,7 @@ export default {
     main_model: String,
     mem_model: String,
     use_local: Boolean,
+    show_local_toggle: Boolean,
     show_token_use: Boolean,
     context_length: Number
   },
@@ -58,7 +59,7 @@ export default {
       />
     </div>
 
-    <div>
+    <div v-if="show_local_toggle">
       <label>Use Local AI: </label>
       <input v-model="localVal" type="checkbox" />
     </div>

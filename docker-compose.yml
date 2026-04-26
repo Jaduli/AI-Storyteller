@@ -1,3 +1,5 @@
+  # Regular compose file to run without GPU support (no local AI)
+  # run with `docker compose up --build`
 services:
   backend:
     build: ./backend
@@ -6,6 +8,8 @@ services:
     volumes:
       - ./backend/files:/app/files
       - ./backend/data:/app/data
+    environment:
+      - LOCAL_AI_ENABLED=false
 
   frontend:
     build: ./frontend
@@ -13,16 +17,3 @@ services:
       - "5173:80"
     depends_on:
       - backend
-
-  ai:
-    build: ./ai
-    image: ollama/ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    deploy: {}
-    gpus: all
-
-volumes:
- ollama_data:

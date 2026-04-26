@@ -12,6 +12,10 @@ import database
 # Initialize the database
 database.init_db()
 
+# Check if local AI is enabled via Docker compose environment variable 
+# Default to false if not set
+LOCAL_AI_ENABLED = os.getenv("LOCAL_AI_ENABLED", "false") == "true"
+
 # Local Ollama model API endpoint and model
 OLLAMA_URL = "http://ai:11434/api/chat"
 OLLAMA_MODEL = "llama3:8b"
@@ -29,6 +33,18 @@ os.makedirs(BASE_DIR, exist_ok=True)
 
 
 # Backend Routes #
+
+
+"""
+/config
+
+Returns configuration settings.
+"""
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    return jsonify({
+        "local_ai_enabled": LOCAL_AI_ENABLED
+    })
 
 """
 /load
@@ -159,7 +175,7 @@ def continue_story():
     full_prompt = content
 
     # Get relevant memories for recent content
-    memories = database.get_relevant_memories(content[-2000:], story_id)
+    memories = database.get_relevant_memories(content[-2000:], story_id, 2)
 
     if (memories != []):
         memory_block = "\n".join(memories)
@@ -228,7 +244,7 @@ def summarize():
     new_summary = ""
     tokens_total = -1
 
-    if (local and local == True):
+    if (local and local == True and LOCAL_AI_ENABLED):
         # Local summarization using Ollama API
         response = requests.post(OLLAMA_URL, json={
             "model": OLLAMA_MODEL,
@@ -313,7 +329,7 @@ def memorize():
     new_memory = ""
     tokens_total = -1
 
-    if (local and local == True):
+    if (local and local == True and LOCAL_AI_ENABLED):
         # Local memorization using Ollama API
         response = requests.post(OLLAMA_URL, json={
             "model": OLLAMA_MODEL,
