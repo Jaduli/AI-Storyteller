@@ -10,12 +10,12 @@ If you have an NVIDIA GPU with at least 8 GB of VRAM and compatible drivers, you
 
 NOTE! The full container takes about 25-35 GB to run, mainly due to Docker images and the local AI model (only installed if built on GPU mode). First time set up may take 20+ minutes to compose depending on selected mode and your internet connection.
 
-Add your cloud AI API key and URL in a .env file in the root folder. The API key is ONLY used for API calls to your selected AI. You can also add a default model for external API calls.
+Add your cloud AI API key and URL in a .env file in the root folder. The API key is ONLY used for API calls to your selected AI. You can also add default models for external API calls.
 
 Example AI, GroqCloud:
 https://console.groq.com/home
 API URL: https://api.groq.com/openai/v1/chat/completions
-Groq provides a free model: llama-3.1-8b-instant (rate limits apply, use less context). Recommended only for testing purposes.
+Groq provides a free model: llama-3.1-8b-instant (rate limits apply, use less context, recommended only for testing purposes).
 
 Best price/quality AI, DeepSeek:
 https://platform.deepseek.com/
@@ -23,7 +23,7 @@ API URL: https://api.deepseek.com/chat/completions
 Model name & Pricing can be found here:
 https://api-docs.deepseek.com/quick_start/pricing
 
-The container can be stopped with CTRL+C in the terminal. Once built, the container can be run directly through the Docker Desktop app.
+The container can be stopped with CTRL+C in the terminal. Once built, the container can also be run directly through the Docker Desktop app.
 
 
 GENERATION INSRUCTIONS
@@ -32,7 +32,7 @@ Once you have the app running, begin a story by writing in the editor or load a 
 
 Additional story generation instructions, such as storytelling style or content restrictions, can be written in the Instructions tab. Default prompts for story, memory, and summary generation can be found in backend/default_prompts.py file. By default, there are no safeguards for generated content beyond the model's and API's own guardrails. Be mindful that the AI may provide mature or disturbing content if prompted to do so. For this reason, it should never be used by minors without adult supervision.
 
-The story is saved automatically after every continue action. It can also be saved manually with the save button. One backup save is created for each file, which can be accessed with file name {story name}_backup. Saved files and their backups can be found in backend/files. Memories are saved in a database which can be found in backend/data/memory.db. Memories can be viewed and edited with an SQL compatible database editor, e.g DBeaver (https://dbeaver.io/). As summaries and memories are generated with AI, hallucinations and metatext may be included in the output. For this reason, manual context editing may be required to lower context use and to keep the story consistent.
+The story is saved automatically after every continue action. It can also be saved manually with the Save button. One backup save is created for each file, which can be accessed with the file name {story name}_backup. Saved files and their backups can be found in backend/files. Memories are saved in a database which can be found in backend/data/memory.db. Memories can be viewed and edited with an SQL compatible database editor, e.g DBeaver (https://dbeaver.io/). As summaries and memories are generated with AI, hallucinations and metatext may be included in the output. For this reason, manual context editing may be required to lower context use and to keep the story consistent.
 
 
 PROJECT INFORMATION

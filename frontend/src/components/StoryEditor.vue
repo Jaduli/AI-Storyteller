@@ -57,7 +57,7 @@ export default {
       const memory_content = text.slice(this.memory_cursor, cutoff_index);
 
       // Only create memory if there's enough content to memorize
-      if (memory_content.length < 4000) return '';
+      if (memory_content.length < 6000) return '';
 
       // Move memory cursor forward to cutoff index for next memory
       this.memory_cursor = cutoff_index;
@@ -74,7 +74,7 @@ export default {
       const new_content = text.slice(this.summary_cursor, cutoff_index);
 
       // Only summarize if there's enough new content to summarize
-      if (new_content.length < 2000) return '';
+      if (new_content.length < 4000) return '';
 
       // Move summary cursor forward to cutoff index for next summary
       this.summary_cursor = cutoff_index;
@@ -89,11 +89,13 @@ export default {
         return;
       }
       try {
-        this.status_message = 'Continuing story...';
         this.active_requests++;
+        this.status_message = 'Continuing story...';
 
-        const context_cards = this.$refs.contextCards ? this.$refs.contextCards.getMatchingContextCards(this.content) : '';
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
+
+        // Get relevant context cards based on found keywords in recent story
+        const context_cards = this.$refs.contextCards.getMatchingContextCards(this.recent_story);
 
         const res = await fetch('/api/continue', {
           method: 'POST',
@@ -252,6 +254,9 @@ export default {
 
         // Ensure filename ends with .json
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
+        
+        const context_cards = this.$refs.contextCards.cards || [];
+
         const res = await fetch('/api/save', {
           method: 'POST',
           headers: {
@@ -265,7 +270,8 @@ export default {
             summary: this.summary,
             plot_essentials: this.plot_essentials,
             memory_cursor: this.memory_cursor,
-            summary_cursor: this.summary_cursor
+            summary_cursor: this.summary_cursor,
+            context_cards: context_cards
           })
         });
         const data = await res.json();
@@ -305,6 +311,7 @@ export default {
         this.plot_essentials = data.plot_essentials || '';
         this.memory_cursor = data.memory_cursor || 0;
         this.summary_cursor = data.summary_cursor || 0;
+        this.$refs.contextCards.cards = data.context_cards || [];
 
         if (data.error) {
           this.status_message = 'Back end: ' + data.error + ' New story created.';

@@ -87,6 +87,7 @@ def load_file():
             plot_essentials = data.get("plot_essentials", "None.")
             memory_cursor = data.get("memory_cursor", 0)
             summary_cursor = data.get("summary_cursor", 0)
+            context_cards = data.get("context_cards", [])
     except Exception as e:
         # Internal Server Error
         return jsonify({"error": str(e)}), 500
@@ -95,8 +96,8 @@ def load_file():
         return jsonify({"error": "Story ID missing from file."}), 400
 
     return jsonify({"story_id": story_id, "instructions": instructions, "content": content, 
-                    "summary": summary, "plot_essentials": plot_essentials,
-                    "memory_cursor": memory_cursor, "summary_cursor":summary_cursor})
+                    "summary": summary, "plot_essentials": plot_essentials, "memory_cursor": memory_cursor,
+                    "summary_cursor":summary_cursor, "context_cards": context_cards})
 
 """
 /save
@@ -113,8 +114,9 @@ def save_file():
     content = data.get('content')
     summary = data.get('summary', 'None.')
     plot_essentials = data.get('plot_essentials', 'None.')
-    memory_cursor = data.get('memory_cursor')
-    summary_cursor = data.get('summary_cursor')
+    memory_cursor = data.get('memory_cursor', 0)
+    summary_cursor = data.get('summary_cursor', 0)
+    context_cards = data.get('context_cards', [])
 
     if not filename:
         return jsonify({"error": "Filename is required."}), 400
@@ -152,10 +154,11 @@ def save_file():
         # Rename current file to backup
         os.rename(path, backup_path)
 
+    # Save new file
     with open(path, 'w', encoding='utf-8') as f:
         json.dump({"story_id": story_id, "instructions": instructions, "content": content, 
-                   "summary": summary, "plot_essentials": plot_essentials, 
-                   "memory_cursor": memory_cursor, "summary_cursor": summary_cursor}, 
+                   "summary": summary, "plot_essentials": plot_essentials, "memory_cursor": memory_cursor, 
+                   "summary_cursor": summary_cursor, "context_cards": context_cards}, 
                   f, ensure_ascii=False, indent=2)
 
     return jsonify({"message": "File saved as " + filename + "."})

@@ -6,7 +6,7 @@ export default {
   components: { StoryEditor, SettingsMenu },
   data() {
     return {
-      // Default settings
+      // Default settings //
 
       // Main model used for story continuation.
       main_model: 'llama-3.1-8b-instant', // Free model on Groq
@@ -23,8 +23,8 @@ export default {
       // used as context in story generation (in tokens).
       context_length: 1000,
       // Top P and temperature control randomness in the AI output.
-      // Higher values mean more randomness, lower values improve consistency
-      // with story context (e.g. story essentials and memories).
+      // Higher values mean more randomness and creativity, lower values improve 
+      // consistency with story context (e.g. story essentials and memories).
       top_p: 0.9,
       temperature: 0.8,
       // Max tokens controls the length of returned content in story generation.
@@ -61,6 +61,9 @@ export default {
       :use_local="use_local"
       :show_token_use="show_token_use"
       :context_length="context_length"
+      :top_p="top_p"
+      :temperature="temperature"
+      :max_tokens="max_tokens"
     />
     <button @click="show_settings = !show_settings">
       {{ show_settings ? 'Hide Settings' : 'Show Settings' }}

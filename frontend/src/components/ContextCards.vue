@@ -74,7 +74,7 @@ export default {
 
         <button @click="addCard">Add Card</button>
     </div>
-
+    <h3>Existing Cards</h3>
     <ContextCard
       v-for="card in cards"
       :key="card.id"
@@ -83,3 +83,67 @@ export default {
     />
   </div>
 </template>
+
+<style scoped>
+/* Styling generated with Copilot */
+.context-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.context-card {
+  border: 1px solid #0f0f1e;
+  border-radius: 5px;
+  padding: 15px;
+  background: #1a1a2e;
+}
+
+.context-card h3 {
+  margin-top: 0;
+  color: #ccc;
+}
+
+.context-card h4 {
+  margin: 10px 0 5px 0;
+  color: #ccc;
+}
+
+.context-card input,
+.context-card textarea {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  background: #0f0f1e;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 3px;
+  font-family: inherit;
+}
+
+.context-card input:focus,
+.context-card textarea:focus {
+  outline: none;
+  border-color: #aa3bff;
+  box-shadow: 0 0 5px rgba(170, 59, 255, 0.3);
+}
+
+.context-card button {
+  background: #aa3bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.context-card button:hover {
+  background: #9a2bef;
+}
+
+.context-card textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+</style>
