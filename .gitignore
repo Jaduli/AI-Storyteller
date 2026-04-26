@@ -1,4 +1,5 @@
 backend/files/*
+backend/data/*
 .env
 .env.*
-backend/data/*
+!.env.example

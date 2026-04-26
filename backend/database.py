@@ -102,6 +102,18 @@ def get_memories(story_id):
     return [row["content"] for row in rows]
 
 """
+Gets most recent memories based on story ID up to a specified limit.
+"""
+def get_recent_memories(story_id, limit=2):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT content FROM memories WHERE story_id = ? ORDER BY created_at DESC LIMIT ?",
+        (story_id, limit)
+    ).fetchall()
+    conn.close()
+    return [row["content"] for row in rows]
+
+"""
 Embeds text into a numeric vector, used for similarity search.
 """
 def embed(text):

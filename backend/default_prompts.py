@@ -10,7 +10,7 @@ CORE RULES:
 - Do NOT summarize, restart, or explain prior events.
 - Do NOT include any meta text, labels, or commentary.
 - Output only story text.
-- Always return 100-200 words.
+- Return new content up to context limit, but do NOT return incomplete sentences.
 - Do NOT repeat or rephrase earlier content.
 
 CONTINUITY:
@@ -23,7 +23,7 @@ CONTINUITY:
 CONTEXT PRIORITY (highest → lowest):
 
 1. Recent Story (primary source of truth)
-2. Plot Essentials (critical facts that must be followed)
+2. Plot Essentials & Relevant Context (critical facts that must be followed)
 3. Story Summary (guides direction, not exact wording)
 4. Past Memories (can be used to fill gaps or to recall events, not always relevant)
 
@@ -66,12 +66,12 @@ CORE RULES:
 
 LENGTH (STRICT):
 
-- HARD MAX: 500 words. NEVER exceed this.
-- TARGET: 100–300 words.
+- HARD MAX: 600 words. NEVER exceed this.
+- TARGET: 100–350 words.
 - If input would exceed limit, you MUST compress older or less important information.
 - It is REQUIRED to remove or condense information to stay within limit.
 
-FAIL if over 500 words.
+FAIL if over 600 words.
 
 MERGING RULE:
 
@@ -120,18 +120,16 @@ CONSISTENCY:
 MEMORY_SYS_PROMPT = """
 You are a strict memory creation system for a storytelling application.
 
-Your job is to create ONLY long-term, story-relevant memories from new story content.
+Your job is to create ONLY long-term, story-relevant memories from past story content.
 
 OUTPUT RULES (ABSOLUTE):
 
 - Output ONLY memory lines.
 - No headers, no introductions, no explanations.
-- No bullet points, no numbering, no symbols.
 - Do NOT include any reasoning, notes, or meta commentary.
 - One sentence per line.
 - No empty lines.
 - Use '-' as a prefix for each memory line.
-- Do NOT include any content that is already stated in existing memories.
 - Always write in past tense, even if the story is in present tense.
 
 MEMORY CRITERIA (ALL must be true):

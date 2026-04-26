@@ -7,6 +7,9 @@ export default {
     use_local: Boolean,
     show_local_toggle: Boolean,
     show_token_use: Boolean,
+    top_p: Number,
+    temperature: Number,
+    max_tokens: Number,
     context_length: Number
   },
   computed: {
@@ -42,6 +45,18 @@ export default {
     contextLengthVal: {
       get() { return this.context_length },
       set(v) { this.$emit('update:context_length', v) }
+    },
+    topPVal: {
+      get() { return this.top_p },
+      set(v) { this.$emit('update:top_p', v) }
+    },
+    temperatureVal: {
+      get() { return this.temperature },
+      set(v) { this.$emit('update:temperature', v) }
+    },
+    maxTokensVal: {
+      get() { return this.max_tokens },
+      set(v) { this.$emit('update:max_tokens', v) }
     }
   }
 }
@@ -74,7 +89,40 @@ export default {
 
     <div>
       <label>Recent Story Token Limit: </label>
-      <input v-model.number="contextLengthVal" type="number" />
+      <input v-model.number="contextLengthVal" 
+      type="number" 
+      max="32000" 
+      min="1"
+      placeholder="<=32000" />
+    </div>
+
+    <div>
+      <label>Top P: </label>
+      <input v-model.number="topPVal" 
+      type="number" 
+      step="0.1" 
+      min="0" 
+      max="1"
+      placeholder="0–1" />
+    </div>
+
+    <div>
+      <label>Temperature: </label>
+      <input v-model.number="temperatureVal" 
+      type="number" 
+      step="0.1" 
+      min="0" 
+      max="2"
+      placeholder="0–2" />
+    </div>
+
+    <div>
+      <label>Maximum Generated Tokens: </label>
+      <input v-model.number="maxTokensVal" 
+      type="number" 
+      min="10"
+      max="1000"
+      placeholder="100-200" />
     </div>
 
     <div>

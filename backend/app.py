@@ -20,9 +20,10 @@ LOCAL_AI_ENABLED = os.getenv("LOCAL_AI_ENABLED", "false") == "true"
 OLLAMA_URL = "http://ai:11434/api/chat"
 OLLAMA_MODEL = "llama3:8b"
 
-load_dotenv()
 api_url = os.getenv("API_URL")
 api_key = os.getenv("API_KEY")
+api_main_model = os.getenv("API_MAIN_MODEL", None)
+api_mem_model = os.getenv("API_MEM_MODEL", None)
 
 app = Flask(__name__)
 CORS(app)
@@ -43,7 +44,9 @@ Returns configuration settings.
 @app.route('/api/config', methods=['GET'])
 def get_config():
     return jsonify({
-        "local_ai_enabled": LOCAL_AI_ENABLED
+        "local_ai_enabled": LOCAL_AI_ENABLED,
+        "main_model": api_main_model,
+        "mem_model": api_mem_model
     })
 
 """
@@ -130,6 +133,25 @@ def save_file():
     real_path = os.path.realpath(path)
     if not real_path.startswith(os.path.realpath(BASE_DIR)):
         return jsonify({"error": "Invalid path."}), 400
+    
+    # Create a backup of existing file. Only keep one backup per file.
+    if os.path.exists(path):
+        # Build backup filename (story.json -> story_backup.json)
+        base, ext = os.path.splitext(filename) # Get base name without extension
+        backup_filename = f"{base}_backup.json"
+        backup_path = os.path.join(BASE_DIR, backup_filename)
+
+        # Ensure backup path is also safe
+        real_backup_path = os.path.realpath(backup_path)
+        if not real_backup_path.startswith(os.path.realpath(BASE_DIR)):
+            return jsonify({"error": "Invalid backup path."}), 400
+
+        # If backup already exists, remove it (only keep one backup)
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+
+        # Rename current file to backup
+        os.rename(path, backup_path)
 
     with open(path, 'w', encoding='utf-8') as f:
         json.dump({"story_id": story_id, "instructions": instructions, "content": content, 
@@ -154,9 +176,9 @@ def continue_story():
     if not data:
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
-    content = data.get('content')
-    if not content or content.strip() == "":
-        return jsonify({"error": "Empty content."}), 400
+    recent_story = data.get('recent_story')
+    if not recent_story or recent_story.strip() == "":
+        return jsonify({"error": "Empty story content."}), 400
     
     model = data.get('model')
     if not model:
@@ -167,24 +189,43 @@ def continue_story():
         return jsonify({"error": "Story ID is required."}), 400
     
     user_instructions = data.get('instructions')
+    plot_essentials = data.get('plot_essentials', 'None.')
+    summary = data.get('summary', 'None.')
+    context_cards = data.get('context_cards', 'None.')
+
+    top_p = data.get('top_p', 0.9)
+    temperature = data.get('temperature', 0.8)
+    max_tokens = data.get('max_tokens', 200)
 
     # Validate environment configuration
     if not api_url or not api_key:
         return jsonify({"error": "API_URL or API_KEY not set."}), 500
     
-    full_prompt = content
-
     # Get relevant memories for recent content
-    memories = database.get_relevant_memories(content[-2000:], story_id, 2)
+    relevant_memories = database.get_relevant_memories(recent_story[-2000:], story_id, 2)
 
-    if (memories != []):
-        memory_block = "\n".join(memories)
+    # Get most recent memories for story
+    recent_memories = database.get_recent_memories(story_id, 2)
 
-        full_prompt = f"Relevant Memories:\n{memory_block}\n\n{content}"
+    # Combine and remove duplicate memories
+    unique_memories = list(set(relevant_memories + recent_memories))
+
+    memory_block = "\n".join(unique_memories) or "None."
+    
+    # Context ordered based on which content is most likely to stay static (unedited).
+    # This will increase rate of cache hits in API call -> cheaper responses.
+    full_prompt = (
+        "[Plot Essentials]\n" + plot_essentials +
+        "\n\n[Story Summary]\n" + summary +
+        "\n\n[Past Memories]\n" + memory_block +
+        "\n\n[Relevant Context]\n" + context_cards +
+        "\n\n[Recent Story]\n" + recent_story
+    )
     
     full_instructions = GENERATION_SYS_PROMPT
+
     if (user_instructions.strip() != ''):
-        full_instructions = (f"{GENERATION_SYS_PROMPT}\nSpecial Instructions:\n{user_instructions}")
+        full_instructions = (f"{GENERATION_SYS_PROMPT}\nSTORYTELLING:\n{user_instructions}")
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
@@ -194,8 +235,12 @@ def continue_story():
             {"role": "system", "content": full_instructions},
             {"role": "user", "content": full_prompt}
         ],
-        "max_tokens": 200,
-        "temperature": 1.5
+        "max_tokens": max_tokens,
+        "top_p": top_p,
+        "temperature": temperature,
+        "presence_penalty": 0.3, # Increases the likelihood of introducing new content vs repeating existing content.
+        "frequency_penalty": 0.3, # Decreases the likelihood of repeating words or phrases.
+        "thinking": {"type": "disabled"} # Disable "thinking" phase to greatly reduce token use and speed up responses.
     }
 
     # Call external AI API with error handling

@@ -1,12 +1,20 @@
 <script>
+import ContextCards from './ContextCards.vue';
+
 export default {
   name: 'StoryEditor',
+  components: {
+    ContextCards
+  },
   props: {
     main_model: String,
     mem_model: String,
     use_local: Boolean,
     show_token_use: Boolean,
-    context_length: Number
+    context_length: Number,
+    top_p: Number,
+    temperature: Number,
+    max_tokens: Number
   },
   data() {
     return {
@@ -84,10 +92,8 @@ export default {
         this.status_message = 'Continuing story...';
         this.active_requests++;
 
-        const context = 'Plot Essentials:\n' + this.plot_essentials + '\n\nSummary:\n' + this.summary;
+        const context_cards = this.$refs.contextCards ? this.$refs.contextCards.getMatchingContextCards(this.content) : '';
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
-
-        const full_context = context + '\n\nRecent Story:\n' + recent_story;
 
         const res = await fetch('/api/continue', {
           method: 'POST',
@@ -95,10 +101,16 @@ export default {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            story_id: this.story_id,
-            content: full_context,
             model: this.main_model,
-            instructions: this.instructions
+            story_id: this.story_id,
+            instructions: this.instructions,
+            summary: this.summary,
+            plot_essentials: this.plot_essentials,
+            context_cards: context_cards,
+            recent_story: recent_story,
+            top_p: this.top_p,
+            temperature: this.temperature,
+            max_tokens: this.max_tokens
           })
         });
         const data = await res.json();
@@ -370,10 +382,17 @@ export default {
   </button>
 
   <button 
-    :class="{ active: active_tab === 'context' }"
-    @click="active_tab = 'context'"
+    :class="{ active: active_tab === 'context_cards' }"
+    @click="active_tab = 'context_cards'"
   >
-    Context
+    Context Cards
+  </button>
+
+  <button 
+    :class="{ active: active_tab === 'sent_context' }"
+    @click="active_tab = 'sent_context'"
+  >
+    Sent Context
   </button>
   </div>
 
@@ -420,7 +439,12 @@ export default {
       </textarea>
     </div>
 
-    <div class="container" v-show="active_tab === 'context'">
+    <div class="container" v-show="active_tab === 'context_cards'">
+      <h2>Context Cards</h2>
+      <ContextCards ref="contextCards" />
+    </div>
+
+    <div class="container" v-show="active_tab === 'sent_context'">
       <h2>Sent Context</h2>
       <textarea v-model="sent_context" 
       rows="15" 
@@ -435,6 +459,7 @@ export default {
     <h2>Story File Name</h2>
     <input v-model="filename" placeholder="Enter file name" />
     <button @click="loadStory" :disabled="isLoading">Load Story</button>
+    <button @click="saveStory" :disabled="isLoading">Save Story</button>
   </div>
 </template>
 

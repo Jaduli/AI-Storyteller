@@ -10,6 +10,8 @@ services:
       - ./backend/data:/app/data
     environment:
       - LOCAL_AI_ENABLED=true
+    env_file:
+      - .env
 
   frontend:
     build: ./frontend
