@@ -1,4 +1,5 @@
 backend/files/*
+!backend/files/example.json
 backend/data/*
 .env
 .env.*

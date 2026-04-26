@@ -47,7 +47,7 @@ export default {
       if (matching.length === 0) return '';
       
       // Format matching cards into a string to be included in the prompt
-      let cardText = 'Relevant Context:\n';
+      let cardText = '';
       for (const card of matching) {
         cardText += '- ' + card + '\n';
       }
@@ -69,12 +69,18 @@ export default {
         <input type="text" v-model="name" />
         <h4>Content</h4>
         <textarea v-model="content" />
-        <h4>Keywords</h4>
+        <h4>Keywords (comma-separated)</h4>
         <input type="text" v-model="keywords" />
 
         <button @click="addCard">Add Card</button>
     </div>
+    <div class="context-card">
     <h3>Existing Cards</h3>
+    <h4>
+      Cards with keywords matching recent story content will be included as context in AI generation.
+      Cards will be saved automatically when edited.
+    </h4>
+    </div>
     <ContextCard
       v-for="card in cards"
       :key="card.id"
@@ -97,16 +103,15 @@ export default {
   border-radius: 5px;
   padding: 15px;
   background: #1a1a2e;
+  color: #fff;
 }
 
 .context-card h3 {
   margin-top: 0;
-  color: #ccc;
 }
 
 .context-card h4 {
-  margin: 10px 0 5px 0;
-  color: #ccc;
+  margin: 5px 0 5px 0;
 }
 
 .context-card input,

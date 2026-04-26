@@ -26,7 +26,7 @@ export default {
         <input type="text" v-model="card.name" />
         <h4>Content</h4>
         <textarea v-model="card.content" />
-        <h4>Keywords</h4>
+        <h4>Keywords (comma-separated)</h4>
         <input type="text" v-model="card.keywords" />
         <button @click="$emit('remove')">Remove</button>
     </div>

@@ -29,7 +29,8 @@ export default {
       temperature: 0.8,
       // Max tokens controls the length of returned content in story generation.
       max_tokens: 200,
-      show_settings: false
+      show_settings: false,
+      active_tab: 'editor'
     }
   },
   async mounted() {
@@ -64,12 +65,14 @@ export default {
       :top_p="top_p"
       :temperature="temperature"
       :max_tokens="max_tokens"
+      @tab-changed="active_tab = $event"
     />
     <button @click="show_settings = !show_settings">
       {{ show_settings ? 'Hide Settings' : 'Show Settings' }}
     </button>
-    <SettingsMenu 
-      v-if="show_settings"
+    <!-- Hide settings menu when on context cards tab to avoid overlap -->
+    <SettingsMenu
+      v-if="show_settings && active_tab !== 'context_cards'"
       
       :main_model="main_model"
       :mem_model="mem_model"

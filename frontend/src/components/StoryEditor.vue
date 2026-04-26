@@ -6,6 +6,7 @@ export default {
   components: {
     ContextCards
   },
+  emits: ['tab-changed'],
   props: {
     main_model: String,
     mem_model: String,
@@ -39,6 +40,11 @@ export default {
     }
   },
   methods: {
+    // Function to set active tab and emit event to parent component
+    setActiveTab(tab) {
+      this.active_tab = tab;
+      this.$emit('tab-changed', tab);
+    },
     // Helper function to trim text to approximate token length
     trimToTokenApprox(text, max_tokens) {
       // Approximate to 4 characters per token (may vary based on language and content)
@@ -95,7 +101,7 @@ export default {
         const recent_story = this.trimToTokenApprox(this.content, this.context_length);
 
         // Get relevant context cards based on found keywords in recent story
-        const context_cards = this.$refs.contextCards.getMatchingContextCards(this.recent_story);
+        const context_cards = this.$refs.contextCards.getMatchingContextCards(recent_story);
 
         const res = await fetch('/api/continue', {
           method: 'POST',
@@ -370,42 +376,42 @@ export default {
   <div class="tab-header">
   <button 
     :class="{ active: active_tab === 'instructions' }"
-    @click="active_tab = 'instructions'"
+    @click="setActiveTab('instructions')"
   >
     Instructions
   </button>
 
   <button 
     :class="{ active: active_tab === 'editor' }"
-    @click="active_tab = 'editor'"
+    @click="setActiveTab('editor')"
   >
     Editor
   </button>
 
   <button 
     :class="{ active: active_tab === 'summary' }"
-    @click="active_tab = 'summary'"
+    @click="setActiveTab('summary')"
   >
     Summary
   </button>
 
   <button 
     :class="{ active: active_tab === 'essentials' }"
-    @click="active_tab = 'essentials'"
+    @click="setActiveTab('essentials')"
   >
     Essentials
   </button>
 
   <button 
     :class="{ active: active_tab === 'context_cards' }"
-    @click="active_tab = 'context_cards'"
+    @click="setActiveTab('context_cards')"
   >
     Context Cards
   </button>
 
   <button 
     :class="{ active: active_tab === 'sent_context' }"
-    @click="active_tab = 'sent_context'"
+    @click="setActiveTab('sent_context')"
   >
     Sent Context
   </button>
