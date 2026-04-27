@@ -1,5 +1,10 @@
 <script>
 export default {
+  data() {
+    return {
+      collapse: true
+    }
+  },
   props: {
     card: {
       type: Object,
@@ -22,13 +27,17 @@ export default {
 
 <template>
     <div class="context-card">
-        <h3>Name</h3>
-        <input type="text" v-model="card.name" />
-        <h4>Content</h4>
-        <textarea v-model="card.content" />
-        <h4>Keywords (comma-separated)</h4>
-        <input type="text" v-model="card.keywords" />
-        <button @click="$emit('remove')">Remove</button>
+        <h3>{{ card.name }}</h3>
+        <button @click="collapse = !collapse">{{ collapse ? 'Edit' : 'Collapse' }}</button>
+        <div v-if="!collapse">
+          <h4>Name</h4>
+          <input type="text" v-model="card.name" />
+          <h4>Content</h4>
+          <textarea v-model="card.content" />
+          <h4>Keywords (comma-separated)</h4>
+          <input type="text" v-model="card.keywords" />
+          <button @click="$emit('remove')">Remove</button>
+        </div>
     </div>
 </template>
 

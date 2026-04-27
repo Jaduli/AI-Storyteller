@@ -34,24 +34,40 @@ export default {
       config_ready: false
     }
   },
-  async mounted() {
-    try {
-      // Load config from backend
-      const res = await fetch('/api/config');
-      const data = await res.json();
+  methods: {
+    async loadConfig(delay = 2000) {
+      while (!this.config_ready) {
+        try {
+          const res = await fetch('/api/config');
 
-      // If local AI is enabled, show toggle and set use_local to true by default
-      this.use_local = data.local_ai_enabled;
-      this.show_local_toggle = data.local_ai_enabled;
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
 
-      // Load default models from backend .env if provided
-      this.main_model = data.main_model || this.main_model;
-      this.mem_model = data.mem_model || this.mem_model;
-    } catch (err) {
-      console.error('Failed to load config: ', err);
-    } finally {
-      this.config_ready = true;
+          const data = await res.json();
+
+          // If local AI is enabled, show toggle and set use_local to true by default
+          this.show_local_toggle = data.local_ai_enabled;
+          this.use_local = data.local_ai_enabled;
+          
+          // Load default models from backend .env if provided
+          this.main_model = data.main_model || this.main_model;
+          this.mem_model = data.mem_model || this.mem_model;
+
+          this.config_ready = true;
+        } catch (err) {
+          console.error('Failed to load backend configuration, retrying...', err);
+          await this.wait(delay);
+        }
+      }
+    },
+    wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
+  },
+  async mounted() {
+    // Load backend config. Wait 2 seconds before retry.
+    this.loadConfig(2000);
   }
 }
 </script>
@@ -99,7 +115,7 @@ export default {
     />
   </div>
   <div v-else>
-    <p>Loading configuration, please wait...</p>
+    <p>Loading backend configuration, please wait...</p>
   </div>
 </template>
 
