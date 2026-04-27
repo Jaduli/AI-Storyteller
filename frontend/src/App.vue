@@ -30,7 +30,8 @@ export default {
       // Max tokens controls the length of returned content in story generation.
       max_tokens: 200,
       show_settings: false,
-      active_tab: 'editor'
+      active_tab: 'editor',
+      config_ready: false
     }
   },
   async mounted() {
@@ -47,14 +48,17 @@ export default {
       this.main_model = data.main_model || this.main_model;
       this.mem_model = data.mem_model || this.mem_model;
     } catch (err) {
-      console.error('Failed to load config', err);
+      console.error('Failed to load config: ', err);
+    } finally {
+      this.config_ready = true;
     }
   }
 }
 </script>
 
 <template>
-  <div>
+  <!-- App is loaded only after backend config is ready -->
+  <div v-if="config_ready" class="app-container">
     <h1>AI Storyteller</h1>
     <StoryEditor class="story-editor"
       :main_model="main_model"
@@ -93,6 +97,9 @@ export default {
       @update:temperature="temperature = $event"
       @update:max_tokens="max_tokens = $event"
     />
+  </div>
+  <div v-else>
+    <p>Loading configuration, please wait...</p>
   </div>
 </template>
 

@@ -38,7 +38,7 @@ API URL: https://api.deepseek.com/chat/completions
 Model name & Pricing can be found here:
 https://api-docs.deepseek.com/quick_start/pricing
 
-The container can be stopped with CTRL+C in the terminal. Once built, the container can also be run directly through the Docker Desktop app. After startup, if the site shows an error message when continuing or loading story, back end or local AI might not be ready yet. Wait and try again. Models set in .env will only apply to front if back end is available.
+The container can be stopped with CTRL+C in the terminal. Once built, the container can also be run directly through the Docker Desktop app. After startup, the site will load only once backend is ready. If the site refuses to load, check that containers are up and have finished loading.
 
 
 GENERATION INSRUCTIONS
