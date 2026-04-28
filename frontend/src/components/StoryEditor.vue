@@ -50,49 +50,27 @@ export default {
 
       return text.slice(-max_chars);
     },
-    // Trim past content for memory creation.
-    // Minimum length determines how much content is needed for creating a new memory.
-    trimToPastContent(minimum_length_chars = 7000) {
+    // Extract past content for memory and summary creation.
+    // Minimum length determines how much content is needed for creating a new memory/summary.
+    // If overlap is true, half of minimum length will be added as overlap with recent story.
+    extractPastContent(cursor, minimum_length, overlap = false) {
       const approx_chars_per_token = 4;
+      const recent_story_window = (this.context_length || 4000) * approx_chars_per_token;
 
-      // Trim so that recent story won't be included in memory creation
-      const recent_story_chars = (this.context_length || 4000) * approx_chars_per_token;
+      let cutoff_index = this.content.length - recent_story_window;
 
-      const cutoff_index = Math.max(0, this.content.length - recent_story_chars);
-      
-      // Window is content between memory cursor and story content that has fallen 
-      // out of context window.
-      const memory_content = this.content.slice(this.memory_cursor, cutoff_index);
+      // Add some overlap with recent content. Used in summarization to avoid losing context 
+      // between summary actions.
+      if (overlap) {
+        cutoff_index += minimum_length / 2;
+      }
 
-      // Only create new memory if there's enough content to memorize
-      if (memory_content.length < minimum_length_chars) return '';
+      cutoff_index = Math.max(0, cutoff_index)
 
-      // Move memory cursor forward to cutoff index for next memory
-      this.memory_cursor = cutoff_index;
+      // Content window is between cursor and cutoff index
+      const content_slice = this.content.slice(cursor, cutoff_index);
 
-      return memory_content;
-    },
-    // Trim past content for summary creation
-    trimToSummaryContent(minimum_length_chars = 4000) {
-      const approx_chars_per_token = 4;
-
-      const recent_story_chars = (this.context_length || 4000) * approx_chars_per_token;
-
-      // Overlap with recent content to avoid losing context when content
-      // falls out of context window between summary actions.
-      const overlap = minimum_length_chars / 2;
-
-      const cutoff_index = Math.max(0, this.content.length - recent_story_chars + overlap);
-
-      const new_content = this.content.slice(this.summary_cursor, cutoff_index);
-
-      // Only summarize if there's enough new content to summarize
-      if (new_content.length < minimum_length_chars) return '';
-
-      // Move summary cursor forward to cutoff index for next summary
-      this.summary_cursor = cutoff_index;
-
-      return new_content;
+      return {past_content: content_slice, cutoff_index, valid: content_slice.length >= minimum_length};
     },
     // Main function to continue the story with the backend API
     async continueStory() {
@@ -190,9 +168,10 @@ export default {
     // Function to summarize the story with the backend API
     async summarizeStory() {
       // Use past story content (+some overlap with recent content) for summary
-      const past_content = this.trimToSummaryContent();
+      const {past_content, cutoff_index, valid} = this.extractPastContent(this.summary_cursor, 4000, true);
 
-      if (past_content.trim() === '') {
+      // Return if there is not enough content to summarize
+      if (!valid) {
         return;
       }
 
@@ -222,6 +201,9 @@ export default {
         this.summary = data.summary || '';
         this.status_message = '';
         console.log('Summary created with content:\n' + past_content);
+        
+        // Move summary cursor forward to cutoff index for next summary action
+        this.summary_cursor = cutoff_index;
 
         if (this.show_token_use && data.tokens_total) {
           this.status_message = 'Total tokens used for summary action: ' + data.tokens_total
@@ -234,13 +216,14 @@ export default {
     },
     // Function to create a memory with the backend API
     async createMemory() {
-      if (!this.content || this.content.trim().length < 50) {
+      // Use past story content for new memory
+      const {past_content, cutoff_index, valid} = this.extractPastContent(this.memory_cursor, 7000);
+
+      // Return if there is not enough content to memorize
+      if (!valid) {
         return;
       }
-      // Use past story content for new memory
-      const past_content = this.trimToPastContent();
 
-      if (past_content.trim() === '') return;
       try {
         this.active_requests++;
         this.status_message = 'Creating a new memory, please wait...'
@@ -252,7 +235,7 @@ export default {
           },
           body: JSON.stringify({
             story_id: this.story_id,
-            content: 'Past Story:\n' + past_content,
+            content: 'Past Story Content:\n' + past_content,
             model: this.mem_model,
             local: this.use_local
           })
@@ -266,6 +249,9 @@ export default {
 
         this.status_message = '';
         console.log('Memory created with content:\n' + past_content);
+
+        // Move memory cursor forward to cutoff index for next memory creation
+        this.memory_cursor = cutoff_index;
 
         if (this.show_token_use && data.tokens_total) {
           this.status_message = 'Total tokens used for memory action: ' + data.tokens_total

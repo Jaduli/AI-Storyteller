@@ -17,7 +17,7 @@ LOCAL_AI_ENABLED = os.getenv("LOCAL_AI_ENABLED", "false") == "true"
 
 # Local Ollama model API endpoint and model
 OLLAMA_URL = "http://ai:11434/api/chat"
-OLLAMA_MODEL = "llama3:8b"
+OLLAMA_MODEL = "llama3.1:8b"
 
 api_url = os.getenv("API_URL")
 api_key = os.getenv("API_KEY")
