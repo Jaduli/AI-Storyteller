@@ -101,7 +101,7 @@ export default {
         type="number" 
         max="32000" 
         min="1"
-        placeholder="<=32000"
+        placeholder="4000"
       />
       <button @click="setContextLength(temp_context_length)">Set Limit</button>
       <span title="Changing the limit will automatically save and reload any loaded story.">
@@ -116,7 +116,7 @@ export default {
       step="0.1" 
       min="0" 
       max="1"
-      placeholder="0–1" />
+      placeholder="0.9" />
     </div>
 
     <div>
@@ -126,7 +126,7 @@ export default {
       step="0.1" 
       min="0" 
       max="2"
-      placeholder="0–2" />
+      placeholder="0.8" />
     </div>
 
     <div>
@@ -135,7 +135,7 @@ export default {
       type="number" 
       min="10"
       max="1000"
-      placeholder="100-200" />
+      placeholder="200" />
     </div>
 
     <div>

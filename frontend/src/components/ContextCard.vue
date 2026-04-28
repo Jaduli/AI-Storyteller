@@ -36,7 +36,7 @@ export default {
           <textarea v-model="card.content" />
           <h4>Keywords (comma-separated)</h4>
           <input type="text" v-model="card.keywords" />
-          <button @click="$emit('remove')">Remove</button>
+          <button class="btn btn-danger" @click="$emit('remove')">Remove</button>
         </div>
     </div>
 </template>
@@ -97,5 +97,9 @@ export default {
 .context-card textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+.context-card .btn-danger {
+  background: #ff4d4d;
 }
 </style>

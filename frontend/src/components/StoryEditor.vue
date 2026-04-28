@@ -31,7 +31,6 @@ export default {
       // Values
       filename: '',
       active_tab: 'editor',
-      is_loading: false,
       active_requests: 0,
       memory_cursor: 0,
       summary_cursor: 0,
@@ -49,7 +48,7 @@ export default {
     trimToTokenApprox(text) {
       // Approximate to 4 characters per token (may vary based on language and content)
       const approx_chars_per_token = 4;
-      const max_chars = this.context_length * approx_chars_per_token;
+      const max_chars = (this.context_length || 4000) * approx_chars_per_token;
 
       return text.slice(-max_chars);
     },
@@ -58,7 +57,7 @@ export default {
       const approx_chars_per_token = 4;
 
       // Trim so that recent story won't be included in memory creation
-      const recent_story_chars = this.context_length * approx_chars_per_token;
+      const recent_story_chars = (this.context_length || 4000) * approx_chars_per_token;
 
       const cutoff_index = Math.max(0, this.content.length - recent_story_chars);
       
@@ -78,7 +77,7 @@ export default {
     trimToSummaryContent(minimum_length = 4000) {
       const approx_chars_per_token = 4;
 
-      const recent_story_chars = this.context_length * approx_chars_per_token;
+      const recent_story_chars = (this.context_length || 4000) * approx_chars_per_token;
 
       // Overlap with recent content to avoid losing context when content
       // falls out of context window between summary actions.
@@ -106,7 +105,7 @@ export default {
       }
 
       // Basic validation to ensure there's enough content to continue
-      if (!this.content || this.content.trim().length < 20) {
+      if (!this.story_editor_content || this.story_editor_content.trim().length < 20) {
         this.status_message = 'Error: Please enter enough story content to continue.';
         return;
       }
@@ -132,9 +131,9 @@ export default {
             plot_essentials: this.plot_essentials,
             context_cards: context_cards,
             recent_story: recent_story,
-            top_p: this.top_p,
-            temperature: this.temperature,
-            max_tokens: this.max_tokens
+            top_p: this.top_p || 0.9,
+            temperature: this.temperature || 0.8,
+            max_tokens: this.max_tokens || 200
           })
         });
         const data = await res.json();
@@ -411,7 +410,7 @@ export default {
 
       while (this.isLoading) {
         // Wait for any active requests to finish before handling context length change
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       try {
         const approx = 4;
