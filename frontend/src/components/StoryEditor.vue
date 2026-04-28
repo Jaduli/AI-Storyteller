@@ -39,12 +39,10 @@ export default {
     }
   },
   methods: {
-    // Function to set active tab and emit event to parent component
     setActiveTab(tab) {
       this.active_tab = tab;
-      this.$emit('tab-changed', tab);
     },
-    // Helper function to trim text to approximate token length
+    // Trim text to approximate token length
     trimToTokenApprox(text) {
       // Approximate to 4 characters per token (may vary based on language and content)
       const approx_chars_per_token = 4;
@@ -52,8 +50,9 @@ export default {
 
       return text.slice(-max_chars);
     },
-    // Helper function to trim past content for memory creation
-    trimToPastContent(minimum_length = 7000) {
+    // Trim past content for memory creation.
+    // Minimum length determines how much content is needed for creating a new memory.
+    trimToPastContent(minimum_length_chars = 7000) {
       const approx_chars_per_token = 4;
 
       // Trim so that recent story won't be included in memory creation
@@ -66,29 +65,29 @@ export default {
       const memory_content = this.content.slice(this.memory_cursor, cutoff_index);
 
       // Only create new memory if there's enough content to memorize
-      if (memory_content.length < minimum_length) return '';
+      if (memory_content.length < minimum_length_chars) return '';
 
       // Move memory cursor forward to cutoff index for next memory
       this.memory_cursor = cutoff_index;
 
       return memory_content;
     },
-    // Helper function to trim past content for summary creation
-    trimToSummaryContent(minimum_length = 4000) {
+    // Trim past content for summary creation
+    trimToSummaryContent(minimum_length_chars = 4000) {
       const approx_chars_per_token = 4;
 
       const recent_story_chars = (this.context_length || 4000) * approx_chars_per_token;
 
       // Overlap with recent content to avoid losing context when content
       // falls out of context window between summary actions.
-      const overlap = minimum_length / 2;
+      const overlap = minimum_length_chars / 2;
 
       const cutoff_index = Math.max(0, this.content.length - recent_story_chars + overlap);
 
       const new_content = this.content.slice(this.summary_cursor, cutoff_index);
 
       // Only summarize if there's enough new content to summarize
-      if (new_content.length < minimum_length) return '';
+      if (new_content.length < minimum_length_chars) return '';
 
       // Move summary cursor forward to cutoff index for next summary
       this.summary_cursor = cutoff_index;
@@ -379,7 +378,7 @@ export default {
     }
   },
   computed: {
-    // Set state to loading if any active request is in process.
+    // App state counts as loading if any active request is in process.
     // This disables continue, save, and load buttons to prevent multiple simultaneous 
     // requests which can cause issues.
     isLoading() {
@@ -428,6 +427,9 @@ export default {
           await this.saveStory(false); // Don't sync to new start before saving
           await this.loadStory();
           this.status_message = 'Story saved and reloaded with new context window.';
+        }
+        else {
+          this.status_message = 'Limit set successfully.';
         }
       } catch (err) {
         this.status_message = 'Error handling context resize: ' + (err.message || err);
@@ -487,10 +489,11 @@ export default {
       <h2>Generation Instructions</h2>
       <textarea 
       v-model="instructions" 
-      rows="15" 
+      rows="12" 
       cols="80" 
       placeholder="Additional story generation instructions can be added here.">
       </textarea>
+      <div class="tab-footer-space"></div>
     </div>
 
     <div class="container" v-show="active_tab === 'editor'">
@@ -498,45 +501,47 @@ export default {
       <textarea 
       ref="storyBox"
       v-model="story_editor_content" 
-      rows="15" 
+      rows="12" 
       cols="80" 
-      placeholder="Paste or write story text here"></textarea>
+      placeholder="Paste or write story text here."></textarea>
       <div>
         <button @click="continueStory" :disabled="isLoading">Continue Story</button>
       </div>
     </div>
 
     <div class="container" v-show="active_tab === 'summary'">
-      <h2>Summary</h2>
+      <h2>Story Summary</h2>
       <textarea v-model="summary" 
-      rows="15" 
+      rows="12" 
       cols="80" 
       placeholder="Summary will appear here. Summary will be used as context in story generation.">
       </textarea>
+      <div class="tab-footer-space"></div>
     </div>
 
     <div class="container" v-show="active_tab === 'essentials'">
       <h2>Plot Essentials</h2>
       <textarea v-model="plot_essentials" 
-      rows="15" 
+      rows="12" 
       cols="80" 
       placeholder="Key plot points, character details, or world-building elements. This will be used as context in story generation.">
       </textarea>
+      <div class="tab-footer-space"></div>
     </div>
 
     <div class="container" v-show="active_tab === 'context_cards'">
-      <h2>Context Cards</h2>
       <ContextCards ref="contextCards" />
     </div>
 
     <div class="container" v-show="active_tab === 'sent_context'">
       <h2>Sent Context</h2>
       <textarea v-model="sent_context" 
-      rows="15" 
+      rows="12" 
       cols="80" 
       placeholder="Context sent to story generation will show up here."
       readonly>
       </textarea>
+      <div class="tab-footer-space"></div>
     </div>
   </div>
   <p class="status">{{ status_message}}</p>
@@ -553,12 +558,14 @@ export default {
   height: 30px;
   background: #08060d;
   padding: 5px;
+  margin-bottom: 10px;
 }
 
-textarea {
-  resize: none;
-  font-family: 'Merriweather', 'Georgia', serif;
-  font-size: 13px;
+.container {
+  border: 1px solid #aa3bff;
+  border-radius: 5px;
+  padding: 15px;
+  background: #1a1a2e;
 }
 
 .tab-content {
@@ -568,22 +575,26 @@ textarea {
   padding-top: 10px;
 }
 
-.tab-content .container {
-  position: absolute;
-  width: 100%;
-  top: 0;
-  left: 0;
-}
 .tab-header button {
-  padding: 8px 16px;
+  background: #1a1a2e;
+  color: white;
   border: none;
-  background: #08060d;
+  padding: 8px 16px;
+  border-radius: 3px;
   cursor: pointer;
+  font-weight: bold;
+  margin: 0px;
 }
-
-.tab-header button.active {
+.tab-header button:hover {
   background: #aa3bff;
+}
+.tab-header button.active {
+  background: #9a2bef;
   color: white;
   font-weight: bold;
+}
+
+.tab-footer-space {
+  height: 39px; /* Reserve space for Continue button */
 }
 </style>

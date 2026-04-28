@@ -19,8 +19,16 @@ export default {
   },
   methods: {
     setContextLength(new_length) {
-      // Emit update to parent component
-      this.$emit('update:context_length', new_length);
+      let num = Number(new_length)
+
+      // Handle invalid input
+      if (isNaN(num)) {
+        num = this.context_length || 4000 // fallback
+      } else {
+        // Clamp to 1-32000
+        num = Math.min(Math.max(num, 1), 32000)
+      }
+      this.$emit('update:context_length', num)
     }
   },
   computed: {
@@ -55,15 +63,48 @@ export default {
     },
     topPVal: {
       get() { return this.top_p },
-      set(v) { this.$emit('update:top_p', v) }
+      set(v) {
+        let num = Number(v)
+
+        // Handle invalid input
+        if (isNaN(num)) {
+          num = this.top_p || 0.9 // fallback
+        } else {
+          // Clamp to 0-1
+          num = Math.min(Math.max(num, 0), 1)
+        }
+        this.$emit('update:top_p', num)
+      }
     },
     temperatureVal: {
       get() { return this.temperature },
-      set(v) { this.$emit('update:temperature', v) }
+      set(v) {
+        let num = Number(v)
+
+        // Handle invalid input
+        if (isNaN(num)) {
+          num = this.temperature || 0.8 // fallback
+        } else {
+          // Clamp to 0-2
+          num = Math.min(Math.max(num, 0), 2)
+        }
+        this.$emit('update:temperature', num)
+      }
     },
     maxTokensVal: {
       get() { return this.max_tokens },
-      set(v) { this.$emit('update:max_tokens', v) }
+      set(v) {
+        let num = Number(v)
+
+        // Handle invalid input
+        if (isNaN(num)) {
+          num = this.max_tokens || 200 // fallback
+        } else {
+          // Clamp to 10-1000
+          num = Math.min(Math.max(num, 10), 1000)
+        }
+        this.$emit('update:max_tokens', num)
+      }
     }
   }
 }
@@ -146,4 +187,10 @@ export default {
 </template>
 
 <style scoped>
+.settings-menu {
+  border: 1px solid #aa3bff;
+  border-radius: 5px;
+  padding: 15px;
+  background: #1a1a2e;
+}
 </style>

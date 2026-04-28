@@ -30,7 +30,6 @@ export default {
       // Max tokens controls the length of returned content in story generation.
       max_tokens: 200,
       show_settings: false,
-      active_tab: 'editor',
       config_ready: false
     }
   },
@@ -85,14 +84,12 @@ export default {
       :top_p="top_p"
       :temperature="temperature"
       :max_tokens="max_tokens"
-      @tab-changed="active_tab = $event"
     />
     <button @click="show_settings = !show_settings">
       {{ show_settings ? 'Hide Settings' : 'Show Settings' }}
     </button>
-    <!-- Hide settings menu when on context cards tab to avoid overlap -->
     <SettingsMenu
-      v-if="show_settings && active_tab !== 'context_cards'"
+      v-if="show_settings"
       
       :main_model="main_model"
       :mem_model="mem_model"
@@ -122,5 +119,39 @@ export default {
 <style>
 .story-editor {
   margin-top: 20px;
+}
+input, textarea {
+  resize: none;
+  padding: 8px;
+  background: #0f0f1e;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 3px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+textarea {
+  font-family: 'Merriweather', 'Georgia', serif;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #aa3bff;
+  box-shadow: 0 0 5px rgba(170, 59, 255, 0.3);
+}
+
+button {
+  background: #aa3bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 5px;
 }
 </style>
