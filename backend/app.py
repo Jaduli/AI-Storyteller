@@ -215,7 +215,7 @@ def continue_story():
     memory_block = "\n".join(unique_memories) or "None."
     
     # Context ordered based on which content is most likely to stay static (unedited).
-    # This will increase rate of cache hits in API call -> cheaper responses.
+    # This will increase rate of cache hits in API call -> cheaper responses (if supported by API provider).
     full_prompt = (
         "[Plot Essentials]\n" + plot_essentials +
         "\n\n[Story Summary]\n" + summary +
@@ -227,7 +227,7 @@ def continue_story():
     full_instructions = GENERATION_SYS_PROMPT
 
     if (user_instructions.strip() != ''):
-        full_instructions = (f"{GENERATION_SYS_PROMPT}\nSTORYTELLING:\n{user_instructions}")
+        full_instructions = (f"{GENERATION_SYS_PROMPT}\nSTORYTELLING:\n\n{user_instructions}")
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
@@ -401,6 +401,12 @@ def memorize():
             data = response.json()
 
             new_memory = data.get("message", {}).get("content", "").strip()
+
+            # Remove any leading metatext or labels from the memory.
+            # This is done due to the local AI often including metatext (e.g. "Here are the created memories:")
+            # even when explicitly instructed not to. This may remove a memory line and can be removed
+            # if a better AI model is used for memory creation.
+            new_memory = "\n".join(new_memory.splitlines()[1:]).lstrip("\n")
 
             tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
 

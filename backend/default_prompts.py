@@ -12,6 +12,7 @@ CORE RULES:
 - Output only story text.
 - Return new content up to context limit, but do NOT return incomplete sentences.
 - Do NOT repeat or rephrase earlier content.
+- Do NOT use any markdown formatting or special characters.
 
 CONTINUITY:
 
@@ -62,7 +63,6 @@ CORE RULES:
 - Output ONLY the summary text.
 - No labels, headers, formatting, or meta commentary.
 - No empty lines.
-- Always write in past tense.
 
 LENGTH (STRICT):
 
@@ -73,11 +73,19 @@ LENGTH (STRICT):
 
 FAIL if over 600 words.
 
+POV AND TENSE (MANDATORY):
+
+- The summary MUST be written in past tense.
+- Always use the same point of view as the story (first, second, or third person).
+- NEVER use present tense.
+- NEVER change point of view.
+- Any violation of POV or tense is incorrect output.
+
 MERGING RULE:
 
 - DO NOT append. ALWAYS rewrite into a new compressed summary.
 - Replace outdated info instead of repeating it.
-- Merge overlapping facts into shorter forms.
+- Edit older facts into shorter forms.
 - Prefer newer developments over older ones.
 
 COMPRESSION STRATEGY (MANDATORY WHEN LONG):
@@ -96,24 +104,23 @@ CONTENT PRIORITY (KEEP FIRST):
 4. Relationship changes
 5. Critical world info affecting plot
 
-REMOVE FIRST:
+DO NOT INCLUDE:
 
 - Redundant phrasing
-- Minor actions
+- Minor actions (e.g., walking, looking)
+- Sensory details (e.g., smell, sound, atmosphere)
 - Flavor/descriptive text
 - Dialogue unless it changes state
 
 STYLE:
 
-- Dense, factual, information-rich
-- Use explicit names (no pronouns)
-- No narrative prose
-- Always write in past tense
-
-CONSISTENCY:
-
-- Do NOT contradict input
-- Do NOT invent new information
+- Use explicit names where possible. 
+- Follow the point of view and tense rules strictly. 
+- Use "you" if the story is told in second person point of view.
+- Use "I" if the story is told in first person point of view.
+- Always use explicit names or character traits if the story is told in third person point of view.
+- Write simple, factual sentences.
+- Do not add any information not directly supported by the input.
 """
 
 # Memory
@@ -130,7 +137,14 @@ OUTPUT RULES (ABSOLUTE):
 - One sentence per line.
 - No empty lines.
 - Use '-' as a prefix for each memory line.
-- Always write in past tense, even if the story is in present tense.
+
+POV AND TENSE (MANDATORY):
+
+- ALL memories MUST be written in past tense.
+- Always use the same point of view as the story (first, second, or third person).
+- NEVER use present tense.
+- NEVER change point of view.
+- Any violation of POV or tense is incorrect output.
 
 MEMORY CRITERIA (ALL must be true):
 
@@ -163,8 +177,27 @@ COMPRESSION RULE:
 
 STYLE:
 
-- Use explicit names (do not use pronouns).
-- Write simple, factual sentences in past tense.
+- Use explicit names where possible. 
+- Follow the point of view and tense rules strictly. 
+- Use "you" if the story is told in second person point of view.
+- Use "I" if the story is told in first person point of view.
+- Always use explicit names or character traits if the story is told in third person point of view.
+- Write simple, factual sentences.
 - Do not add any information not directly supported by the input.
 - No storytelling language.
+
+EXAMPLES (CORRECT):
+
+- You were created through a ritual performed by Aria Voss.
+- The man in the red cloak told you that he is your father.
+- Kael learned that the Order of Glass controlled the northern provinces.
+- I swore loyalty to Captain Elric.
+
+EXAMPLES (INCORRECT):
+
+- You become bound to the Order. (wrong tense)
+- Kael will always be loyal to Captain Elric. (speculative, not a current fact)
+- Someone told you that the world is ending. ('someone' is too vague; use a character trait instead)
+- The sun was shining as I walked through the forest. (sensory detail, not a lasting memory)
+
 """

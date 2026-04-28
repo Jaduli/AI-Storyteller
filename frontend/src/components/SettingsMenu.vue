@@ -12,6 +12,17 @@ export default {
     max_tokens: Number,
     context_length: Number
   },
+  data() {
+    return {
+      temp_context_length: this.context_length
+    }
+  },
+  methods: {
+    setContextLength(new_length) {
+      // Emit update to parent component
+      this.$emit('update:context_length', new_length);
+    }
+  },
   computed: {
     // Create computed properties with getters and setters to emit value updates
     mainModelVal: {
@@ -41,10 +52,6 @@ export default {
     tokenVal: {
       get() { return this.show_token_use },
       set(v) { this.$emit('update:show_token_use', v) }
-    },
-    contextLengthVal: {
-      get() { return this.context_length },
-      set(v) { this.$emit('update:context_length', v) }
     },
     topPVal: {
       get() { return this.top_p },
@@ -89,13 +96,19 @@ export default {
 
     <div>
       <label>Recent Story Token Limit: </label>
-      <input v-model.number="contextLengthVal" 
-      type="number" 
-      max="32000" 
-      min="1"
-      placeholder="<=32000" />
+      <input 
+        v-model.number="temp_context_length"
+        type="number" 
+        max="32000" 
+        min="1"
+        placeholder="<=32000"
+      />
+      <button @click="setContextLength(temp_context_length)">Set Limit</button>
+      <span title="Changing the limit will automatically save and reload any loaded story.">
+        ⓘ
+      </span>
     </div>
-
+    
     <div>
       <label>Top P: </label>
       <input v-model.number="topPVal" 

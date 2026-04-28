@@ -21,7 +21,7 @@ export default {
       show_token_use: false,
       // Context length affects the length of recent story
       // used as context in story generation (in tokens).
-      context_length: 1000,
+      context_length: 4000,
       // Top P and temperature control randomness in the AI output.
       // Higher values mean more randomness and creativity, lower values improve 
       // consistency with story context (e.g. story essentials and memories).
