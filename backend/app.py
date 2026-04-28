@@ -406,7 +406,7 @@ def memorize():
             # This is done due to the local AI often including metatext (e.g. "Here are the created memories:")
             # even when explicitly instructed not to. This may remove a memory line and can be removed
             # if a better AI model is used for memory creation.
-            new_memory = "\n".join(new_memory.splitlines()[1:]).lstrip("\n")
+            # new_memory = "\n".join(new_memory.splitlines()[1:]).lstrip("\n")
 
             tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
 

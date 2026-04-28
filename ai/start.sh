@@ -14,7 +14,7 @@ done
 echo "Ollama is ready"
 
 # Pull model (only if missing)
-ollama pull llama3:8b
+ollama pull llama3.1:8b
 
 echo "Model ready"
 

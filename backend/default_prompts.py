@@ -199,5 +199,4 @@ EXAMPLES (INCORRECT):
 - Kael will always be loyal to Captain Elric. (speculative, not a current fact)
 - Someone told you that the world is ending. ('someone' is too vague; use a character trait instead)
 - The sun was shining as I walked through the forest. (sensory detail, not a lasting memory)
-
 """

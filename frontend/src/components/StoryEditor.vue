@@ -142,7 +142,7 @@ export default {
           return;
         }
 
-        continued_content = data.continued_content || '';
+        const continued_content = data.continued_content || '';
 
         // Append continued content to story with proper spacing
         if (recent_story.slice(-1) != '\n') {
