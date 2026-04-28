@@ -185,18 +185,4 @@ STYLE:
 - Write simple, factual sentences.
 - Do not add any information not directly supported by the input.
 - No storytelling language.
-
-EXAMPLES (CORRECT):
-
-- You were created through a ritual performed by Aria Voss.
-- The man in the red cloak told you that he is your father.
-- Kael learned that the Order of Glass controlled the northern provinces.
-- I swore loyalty to Captain Elric.
-
-EXAMPLES (INCORRECT):
-
-- You become bound to the Order. (wrong tense)
-- Kael will always be loyal to Captain Elric. (speculative, not a current fact)
-- Someone told you that the world is ending. ('someone' is too vague; use a character trait instead)
-- The sun was shining as I walked through the forest. (sensory detail, not a lasting memory)
 """
