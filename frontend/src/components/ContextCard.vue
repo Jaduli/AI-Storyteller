@@ -42,62 +42,25 @@ export default {
 </template>
 
 <style scoped>
-/* Styling generated partially with Copilot */
 .context-card {
-  border: 1px solid #aa3bff;
-  border-radius: 5px;
-  padding: 15px;
-  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
-
-.context-card h3 {
-  margin-top: 0;
-  color: #aa3bff;
+.context-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
-
+.context-card textarea {
+  min-height: 120px;
+}
 .context-card h4 {
-  margin: 10px 0 5px 0;
-  color: #ccc;
+  margin: 3px 0 3px;
 }
-
-.context-card input,
-.context-card textarea {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  background: #0f0f1e;
-  color: #fff;
-  border: 1px solid #444;
-  border-radius: 3px;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.context-card input:focus,
-.context-card textarea:focus {
-  outline: none;
-  border-color: #aa3bff;
-  box-shadow: 0 0 5px rgba(170, 59, 255, 0.3);
-}
-
 .context-card button {
-  background: #aa3bff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-weight: bold;
+  margin-bottom: 10px;
 }
-
-.context-card button:hover {
-  background: #9a2bef;
-}
-
-.context-card textarea {
-  min-height: 80px;
-}
-
 .context-card .btn-danger {
   background: #ff4d4d;
 }

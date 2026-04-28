@@ -111,7 +111,7 @@ export default {
 </script>
 
 <template>
-  <div class="settings-menu">
+  <div class="container">
     <h2>Settings</h2>
 
     <div>
@@ -187,10 +187,4 @@ export default {
 </template>
 
 <style scoped>
-.settings-menu {
-  border: 1px solid #aa3bff;
-  border-radius: 5px;
-  padding: 15px;
-  background: #1a1a2e;
-}
 </style>

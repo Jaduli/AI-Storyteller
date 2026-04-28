@@ -486,7 +486,7 @@ export default {
 
   <div class="tab-content">
     <div class="container" v-show="active_tab === 'instructions'">
-      <h2>Generation Instructions</h2>
+      <h2>Storytelling Instructions</h2>
       <textarea 
       v-model="instructions" 
       rows="12" 
@@ -558,14 +558,7 @@ export default {
   height: 30px;
   background: #08060d;
   padding: 5px;
-  margin-bottom: 10px;
-}
-
-.container {
-  border: 1px solid #aa3bff;
-  border-radius: 5px;
-  padding: 15px;
-  background: #1a1a2e;
+  margin-bottom: 15px;
 }
 
 .tab-content {
@@ -594,7 +587,8 @@ export default {
   font-weight: bold;
 }
 
+/* Reserve space for Continue button */
 .tab-footer-space {
-  height: 42px; /* Reserve space for Continue button */
+  height: 42px;
 }
 </style>

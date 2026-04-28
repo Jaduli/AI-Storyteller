@@ -79,6 +79,7 @@ h2 {
   @media (max-width: 1024px) {
     font-size: 20px;
   }
+  font-weight: bold;
 }
 p {
   margin: 0;

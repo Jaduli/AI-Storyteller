@@ -117,9 +117,7 @@ export default {
 </template>
 
 <style>
-.story-editor {
-  margin-top: 20px;
-}
+/* Styling for app components */
 input, textarea {
   resize: none;
   padding: 8px;
@@ -135,6 +133,7 @@ textarea {
   font-family: 'Merriweather', 'Georgia', serif;
   width: 100%;
   margin-bottom: 10px;
+  text-align: justify;
 }
 
 input:focus,
@@ -160,5 +159,6 @@ button {
   border-radius: 5px;
   padding: 15px;
   background: #1a1a2e;
+  margin: 5px;
 }
 </style>
