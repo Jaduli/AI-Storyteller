@@ -36,13 +36,13 @@ export default {
           <textarea v-model="card.content" />
           <h4>Keywords (comma-separated)</h4>
           <input type="text" v-model="card.keywords" />
-          <button class="btn btn-danger" @click="$emit('remove')">Remove</button>
+          <button class="btn btn-danger" @click="$emit('remove')">Delete Card</button>
         </div>
     </div>
 </template>
 
 <style scoped>
-/* Styling generated with Copilot */
+/* Styling generated partially with Copilot */
 .context-card {
   border: 1px solid #aa3bff;
   border-radius: 5px;
@@ -95,7 +95,6 @@ export default {
 }
 
 .context-card textarea {
-  resize: vertical;
   min-height: 80px;
 }
 

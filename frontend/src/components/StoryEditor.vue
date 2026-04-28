@@ -595,6 +595,6 @@ export default {
 }
 
 .tab-footer-space {
-  height: 39px; /* Reserve space for Continue button */
+  height: 42px; /* Reserve space for Continue button */
 }
 </style>
