@@ -1,5 +1,5 @@
-  # Local AI + GPU supported compose file (requires compatible NVIDIA GPU and drivers)
-  # run with `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build`
+# Local AI + GPU supported compose file (requires compatible NVIDIA GPU and drivers)
+# run with `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build`
 services:
   backend:
     build: ./backend
