@@ -116,7 +116,7 @@ export default {
         const data = await res.json();
 
         if (data.error) {
-          this.status_message = 'Error continuing story: ' + data.error;
+          this.status_message = 'Backend error continuing story: ' + data.error;
           return;
         }
 
@@ -195,7 +195,7 @@ export default {
         const data = await res.json();
 
         if (data.error) {
-          this.status_message = 'Error summarizing story: ' + data.error;
+          this.status_message = 'Backend error summarizing story: ' + data.error;
           return;
         }
         this.summary = data.summary || '';
@@ -243,12 +243,11 @@ export default {
         const data = await res.json();
 
         if (data.error) {
-          this.status_message = 'Error creating memory: ' + data.error;
+          this.status_message = 'Backnd error creating memory: ' + data.error;
           return;
         }
 
         this.status_message = '';
-        console.log('Memory created with content:\n' + past_content);
 
         // Move memory cursor forward to cutoff index for next memory creation
         this.memory_cursor = cutoff_index;

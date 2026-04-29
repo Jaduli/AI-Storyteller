@@ -319,7 +319,7 @@ def summarize():
             tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
 
         else:
-            return {"error": response.text}, response.status_code
+            return jsonify({"error": response.text}), response.status_code
     # Default to cloud  
     else:
         if not api_url or not api_key:

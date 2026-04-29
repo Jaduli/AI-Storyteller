@@ -145,7 +145,7 @@ export default {
         placeholder="4000"
       />
       <button @click="setContextLength(temp_context_length)">Set Limit</button>
-      <span title="Changing the limit will automatically save and reload any loaded story.">
+      <span title="Setting the limit will automatically save and reload any loaded story.">
         ⓘ
       </span>
     </div>
@@ -171,7 +171,7 @@ export default {
     </div>
 
     <div>
-      <label>Maximum Generated Tokens: </label>
+      <label>Maximum Returned Tokens: </label>
       <input v-model.number="maxTokensVal" 
       type="number" 
       min="10"

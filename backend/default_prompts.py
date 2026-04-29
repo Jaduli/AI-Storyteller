@@ -66,12 +66,12 @@ CORE RULES:
 
 LENGTH (STRICT):
 
-- HARD MAX: 600 words. NEVER exceed this.
-- TARGET: 100–350 words.
+- HARD MAX: 700 words. NEVER exceed this.
+- TARGET: 100–400 words.
 - If input would exceed limit, you MUST compress older or less important information.
 - It is REQUIRED to remove or condense information to stay within limit.
 
-FAIL if over 600 words.
+FAIL if over 700 words.
 
 POV AND TENSE (MANDATORY):
 
@@ -92,17 +92,21 @@ COMPRESSION STRATEGY (MANDATORY WHEN LONG):
 
 - Remove past events that are no longer relevant to the current story direction.
 - Collapse multiple events into one sentence.
-- Remove minor actions and transient details.
-- Shorten phrasing (e.g., “He decided to go” → “He went”).
-- Keep only state-changing events.
+- Replace actions with their meaning or outcome:
+  - "I nodded" → agreement or decision (or remove if irrelevant)
+  - "She kneeled and begged" → she begged / pleaded (only if plot-relevant)
+- Focus ONLY on state changes, decisions, outcomes, and facts.
 
-CONTENT PRIORITY (KEEP FIRST):
+STATE CHANGE RULE (MANDATORY):
 
-1. Main characters and current state
-2. Goals, conflicts, stakes
-3. Major events and consequences
-4. Relationship changes
-5. Critical world info affecting plot
+- Only include events that change:
+  - goals
+  - relationships
+  - knowledge
+  - power/status
+  - location (if plot-relevant)
+
+- If an action does not change any of the above, REMOVE it.
 
 DO NOT INCLUDE:
 
@@ -121,6 +125,9 @@ STYLE:
 - Always use explicit names or character traits if the story is told in third person point of view.
 - Write simple, factual sentences.
 - Do not add any information not directly supported by the input.
+- DO NOT write in narrative or storytelling style.
+- DO NOT describe physical actions unless they change the story state.
+- FORBIDDEN examples: "I nodded", "she looked at me", "he walked over", "they sat down".
 """
 
 # Memory

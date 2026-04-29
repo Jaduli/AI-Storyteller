@@ -153,6 +153,11 @@ button {
   font-weight: bold;
   margin: 5px;
 }
+button:disabled {
+  background: #9a2bef;
+  cursor: default;
+  opacity: 0.7;
+}
 
 .container {
   border: 1px solid #0f0f1e;
