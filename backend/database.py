@@ -21,7 +21,7 @@ def get_db():
     return conn
 
 """
-Creates an SQLite table for storing memories.
+Creates a SQLite table for storing memories.
 """
 def init_db():
     conn = get_db()
@@ -57,8 +57,11 @@ def load_index(story_id):
 
     if os.path.exists(path):
         index = faiss.read_index(path)
+
+        # Make sure index supports ID mapping
         if not isinstance(index, faiss.IndexIDMap):
             index = faiss.IndexIDMap(index)
+
         return index
 
     # Create new index if it doesn't exist
@@ -119,9 +122,8 @@ Embeds text into a numeric vector, used for similarity search.
 def embed(text):
     return model.encode(text).astype("float32")
 
-
 """
-Back end function for memory generation. Returns ID of added memory.
+Saves content and index of memory to database. Returns ID of added memory.
 """
 def create_memory(story_id, content):
     # Save to SQLite
@@ -157,21 +159,25 @@ def search_memories(story_id, query_embedding, top_k=2):
     distances, indices = index.search(vector, top_k)
 
     # Return indeces for most matching stored memories
+    # Ignores missing memories (-1) e.g. when none have been created
     return [int(i) for i in indices[0] if i != -1]
 
 """
-Back end function to get relevant memories to current story content.
+Gets relevant memories for current story content.
 Returns a list with top_k number of stored memories.
 """
 def get_relevant_memories(content, story_id, top_k=2):
     query_embedding = embed(content)
 
+    # Search the for most similar memories
     ids = search_memories(story_id, query_embedding, top_k)
 
     if not ids:
         return []
 
     conn = get_db()
+
+    # Get memories and their content from database
     rows = conn.execute(
         f"""
         SELECT id, content FROM memories 
@@ -181,6 +187,8 @@ def get_relevant_memories(content, story_id, top_k=2):
     ).fetchall()
     conn.close()
 
+    # Format memories
     row_map = {row["id"]: row["content"] for row in rows}
 
+    # Return memory content while preserving order
     return [row_map[i] for i in ids if i in row_map]

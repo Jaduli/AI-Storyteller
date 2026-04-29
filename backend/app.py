@@ -402,10 +402,11 @@ def memorize():
 
             new_memory = data.get("message", {}).get("content", "").strip()
 
-            # Remove any leading metatext or labels from the memory.
-            # This is done due to the local AI often including metatext (e.g. "Here are the created memories:")
-            # even when explicitly instructed not to. This may remove a memory line and can be removed
-            # if a better AI model is used for memory creation.
+            # Some models often include metatext (e.g. "Here are the created memories:") in their output
+            # even when explicitly instructed not to. The commented out function below removes the first
+            # line of the output and can be used if encountering issues with metatext generation.
+            # It was useful with llama:3, but switching to llama:3.1 seemed to lessen the issue.
+            # 
             # new_memory = "\n".join(new_memory.splitlines()[1:]).lstrip("\n")
 
             tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)

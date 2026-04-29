@@ -17,7 +17,7 @@ RUNNING INSTRUCTIONS
 
 Docker is required to run the app: https://www.docker.com/products/docker-desktop/.
 
-With Docker running, navigate to "AI-Storyteller" folder in your terminal and run `docker-compose up --build` to build and run the app without local AI (=> all AI use is done with an external AI API). 
+With Docker running, navigate to "AI-Storyteller" folder in your terminal and run `docker compose up --build` to build and run the app without local AI (=> all AI use is done with an external AI API). 
 
 When running, the app can be accessed at http://localhost:5173/.
 

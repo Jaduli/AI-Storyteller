@@ -12,13 +12,13 @@ Utility functions for AI Storyteller backend, including:
 def trim_incomplete_sentences(text):
     last_period_index = text.rfind('.')
     if last_period_index != -1:
-        return text[:last_period_index + 1]
+        return text[:last_period_index + 2] # + 2 to include e.g. "-notation if last sentence is dialogue
     return text
 
 def call_ai_api(api_url, headers, payload):
     try:
-        # Call external AI API with 10-second timeout
-        response = requests.post(api_url, headers=headers, json=payload, timeout=10)
+        # Call external AI API with 30-second timeout
+        response = requests.post(api_url, headers=headers, json=payload, timeout=30)
 
         # Try to parse JSON
         try:
