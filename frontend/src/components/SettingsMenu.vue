@@ -124,7 +124,7 @@ export default {
 
     <div v-if="show_local_toggle">
       <label>Use Local AI: </label>
-      <input v-model="localVal" type="checkbox" />
+      <input v-model="localVal" type="checkbox" class="custom-checkbox" />
     </div>
 
     <div v-if="!use_local">
@@ -181,10 +181,13 @@ export default {
 
     <div>
       <label>Show API Call Token Usage: </label>
-      <input v-model="tokenVal" type="checkbox" />
+      <input v-model="tokenVal" type="checkbox" class="custom-checkbox" />
     </div>
   </div>
 </template>
 
 <style scoped>
+.custom-checkbox {
+  accent-color: #aa3bff;
+}
 </style>

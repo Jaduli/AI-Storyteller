@@ -95,8 +95,9 @@ def load_file():
     # Validate story ID
     if not story_id:
         return jsonify({"error": "Story ID missing from file."}), 400
-    if not re.fullmatch(r"\d+", story_id):
-        return jsonify({"error": "Invalid story ID. ID must consist of numbers only."}), 400
+    # Check that ID is a positive integer. Separate check for bool as python counts True and False as int.
+    if not isinstance(story_id, int) or isinstance(story_id, bool) or story_id <= 0:
+        return jsonify({"error": "Invalid story ID. ID must be a positive integer."}), 400
 
     return jsonify({"story_id": story_id, "instructions": instructions, "content": content, 
                     "summary": summary, "story_essentials": story_essentials, "memory_cursor": memory_cursor,
@@ -124,8 +125,8 @@ def save_file():
     # Validate story ID
     if not story_id:
         return jsonify({"error": "Story ID is required."}), 400
-    if not re.fullmatch(r"\d+", story_id):
-        return jsonify({"error": "Invalid story ID. ID must consist of numbers only."}), 400
+    if not isinstance(story_id, int) or isinstance(story_id, bool) or story_id <= 0:
+        return jsonify({"error": "Invalid story ID. ID must be a positive integer."}), 400
 
     # Validate file
     if not filename:

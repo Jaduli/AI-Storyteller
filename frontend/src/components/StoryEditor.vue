@@ -1,6 +1,10 @@
 <script>
 import ContextCards from './ContextCards.vue';
 
+// Approximate to 4 characters per token for simple tokens-to-chars conversion.
+// Real token amount may vary based on language and content.
+const APPROX_CHARS_PER_TOKEN = 4;
+
 export default {
   name: 'StoryEditor',
   components: {
@@ -36,7 +40,8 @@ export default {
       active_requests: 0,
       memory_cursor: 0,
       summary_cursor: 0,
-      // Editable content displayed in story editor
+      // Recent story content (i.e. content within the context window) 
+      // is displayed in the editor
       story_editor_content: '',
     }
   },
@@ -44,21 +49,12 @@ export default {
     setActiveTab(tab) {
       this.active_tab = tab;
     },
-    // Trim text to approximate token length
-    trimToTokenApprox(text) {
-      // Approximate to 4 characters per token (may vary based on language and content)
-      const approx_chars_per_token = 4;
-      const max_chars = (this.context_length || 4000) * approx_chars_per_token;
-
-      return text.slice(-max_chars);
-    },
     // Extract past content between cursor and beginning of recent content,
-    // i.e. content that is past the context window. Overlap with recent story 
-    // can be added and is used in summarization to avoid losing context 
+    // i.e. content that has fallen out of the context window. Overlap with recent  
+    // story can be added and is used in summarization to avoid losing context 
     // between summary actions.
     extractPastContent(cursor, overlap = 0) {
-      const approx_chars_per_token = 4;
-      const recent_story_window = this.context_length * approx_chars_per_token;
+      const recent_story_window = this.context_length * APPROX_CHARS_PER_TOKEN;
 
       let cutoff_index = this.content.length - recent_story_window;
 
@@ -69,27 +65,30 @@ export default {
       cutoff_index = Math.max(0, cutoff_index)
 
       // Past content window is between cursor and cutoff index
-      const content_slice = this.content.slice(cursor, cutoff_index);
+      const past_content = this.content.slice(cursor, cutoff_index);
 
-      return {past_content: content_slice, cutoff_index};
+      return {past_content, cutoff_index};
     },
-    // Main function to continue the story with the backend API
+    // Syncronize content with story editor, e.g. to include user edits before saving
+    syncContentWithEditor() {
+      const start = this.displayStart;
+
+      // Avoid unnecessary assignment if contents match
+      if (this.story_editor_content !== this.content.slice(start)) {
+        this.content = this.content.slice(0, start) + this.story_editor_content;
+      }
+    },
+    // Main function to continue the story with backend API
     async continueStory() {
       const recent_story = this.story_editor_content
 
-      // Basic validation to ensure there's enough content to continue story
+      // Basic validation to ensure there's enough content to continue from
       if (!recent_story || recent_story.trim().length < 20) {
         this.status_message = 'Error: Please enter enough story content to continue.';
         return;
       }
-
-      // Start of recent story content based on context length
-      const start = this.displayStart;
-
-      // Sync content with story editor in case of user edits
-      if (recent_story !== this.content.slice(start)) {
-        this.content = this.content.slice(0, start) + recent_story;
-      }
+      // Sync content with editor for any user edits before continuing story
+      syncContentWithEditor();
       try {
         this.active_requests++;
         this.status_message = 'Continuing story...';
@@ -97,6 +96,7 @@ export default {
         // Get relevant context cards based on found keywords in recent story
         const context_cards = this.$refs.contextCards.getMatchingContextCards(recent_story);
 
+        // Use POST for continue action
         const res = await fetch('/api/continue', {
           method: 'POST',
           headers: {
@@ -151,7 +151,7 @@ export default {
         await this.summarizeStory();
 
         // Automatically turn past context into a memory and save the story if filename is set
-        if (this.filename.trim() != '') {
+        if (this.filename && this.filename.trim() !== '') {
           await this.createMemory();
           await this.saveStory();
         } else {
@@ -163,7 +163,7 @@ export default {
         this.active_requests--;
       }
     },
-    // Function to summarize the story with the backend API
+    // Function to summarize the story with backend API
     async summarizeStory() {
       // Minimum past content length (in characters) to create a new summary.
       // default: 4000
@@ -173,11 +173,8 @@ export default {
       // from being lost between summary actions.
       const overlap = minimum_length_chars / 2;
 
-      const {past_content, cutoff_index} = this.extractPastContent(
-                                             this.summary_cursor, 
-                                             minimum_length_chars, 
-                                             overlap
-                                           );
+      const {past_content, cutoff_index} = 
+              this.extractPastContent(this.summary_cursor, minimum_length_chars, overlap);
 
       // Return if there is not enough content to summarize
       if (past_content.length < minimum_length_chars) {
@@ -187,8 +184,10 @@ export default {
         this.active_requests++;
         this.status_message = 'Summarizing story, please wait...'
 
-        const full_context = 'Current Summary:\n' + this.summary + '\n\nNew Story Content:\n' + past_content;
-
+        const full_context = 'Current Summary:\n' + this.summary + 
+                             '\n\nNew Story Content:\n' + past_content;
+        
+        // Use POST for summary action
         const res = await fetch('/api/summarize', {
           method: 'POST',
           headers: {
@@ -211,7 +210,7 @@ export default {
           return;
         }
 
-        this.summary = data.summary || '';
+        this.summary = data.summary;
         this.status_message = '';
         
         // Move summary cursor forward to cutoff index for next summary action
@@ -226,13 +225,13 @@ export default {
         this.active_requests--;
       }
     },
-    // Function to create a memory with the backend API
+    // Function to create a memory with backend API
     async createMemory() {
       // Minimum past content length to create a new memory.
       // default: 7000
       const minimum_length_chars = 7000;
 
-      // Use past story content for new memory (no overlap)
+      // Use past story content for new memory (without overlap with recent story)
       const {past_content, cutoff_index} = this.extractPastContent(this.memory_cursor, 7000);
 
       // Return if there is not enough content to memorize
@@ -243,6 +242,7 @@ export default {
         this.active_requests++;
         this.status_message = 'Creating a new memory, please wait...'
         
+        // Use POST for memory action
         const res = await fetch('/api/memorize', {
           method: 'POST',
           headers: {
@@ -258,10 +258,9 @@ export default {
         const data = await res.json();
 
         if (data.error) {
-          this.status_message = 'Backnd error creating memory: ' + data.error;
+          this.status_message = 'Backend error creating memory: ' + data.error;
           return;
         }
-
         this.status_message = '';
 
         // Move memory cursor forward to cutoff index for next memory creation
@@ -276,7 +275,7 @@ export default {
         this.active_requests--;
       }
     },
-    // Function to save the story to the backend API
+    // Function to save the story to backend API
     async saveStory(sync = true) {
       if (!this.filename || this.filename.trim() === '') {
         this.status_message = 'Please enter a filename to save the story.';
@@ -284,14 +283,15 @@ export default {
       }
       if (sync) {
         // Sync content with story editor before saving
-        const start = this.displayStart;
-
-        if (this.story_editor_content !== this.content.slice(start)) {
-          this.content = this.content.slice(0, start) + this.story_editor_content;
-        }
+        syncContentWithEditor();
       }
       try {
         this.active_requests++;
+        // Only change status message if this is the only active request to
+        // avoid confusion with other actions.
+        if (this.active_requests === 1) {
+          this.status_message = 'Saving story...';
+        }
 
         // Ensure filename ends with .json
         const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
@@ -322,7 +322,6 @@ export default {
           this.status_message = 'Error saving story: ' + data.error;
           return;
         }
-        // Only show success message if this is the only active request to avoid confusion with other actions
         if (this.active_requests === 1 && data.message) {
           this.status_message = 'Success: ' + data.message;
         }
@@ -385,7 +384,7 @@ export default {
   computed: {
     // App state counts as loading if any active request is in process.
     // This disables continue, save, and load buttons to prevent multiple simultaneous 
-    // requests which can cause issues.
+    // requests which could cause issues.
     isLoading() {
       return this.active_requests > 0;
     },
@@ -393,8 +392,7 @@ export default {
     // This prevents editing already memorized or summarized content and makes textEditor
     // more responsive by not rendering the entire story in the editor.
     displayStart() {
-      const approx_chars_per_token = 4;
-      const max_chars = this.context_length * approx_chars_per_token;
+      const max_chars = this.context_length * APPROX_CHARS_PER_TOKEN;
 
       return Math.max(0, this.content.length - max_chars);
     }
@@ -413,12 +411,11 @@ export default {
 
       // Prevent editing context limit while other actions are in progress
       if (this.isLoading) {
-        alert("Please wait for ongoing actions to finish before changing the token limit.")
+        alert('Please wait for ongoing actions to finish before changing the token limit.');
         return;
       }
       try {
-        const approx_chars_per_token = 4;
-        const old_max_chars = old_val * approx_chars_per_token;
+        const old_max_chars = old_val * APPROX_CHARS_PER_TOKEN;
         const old_start = Math.max(0, this.content.length - old_max_chars);
 
         // Sync content with editor using old start to avoid losing user edits
@@ -544,10 +541,10 @@ export default {
       <div class="tab-footer-space"></div>
     </div>
   </div>
-  <p class="status">{{ status_message}}</p>
+  <p class="status">{{ status_message }}</p>
   <div class="container">
     <h2>Story File Name</h2>
-    <input v-model="filename" placeholder="Enter file name" />
+    <input v-model="filename" placeholder="Enter filename" />
     <button @click="loadStory" :disabled="isLoading">Load Story</button>
     <button @click="saveStory" :disabled="isLoading">Save Story</button>
   </div>
@@ -556,7 +553,7 @@ export default {
 <style scoped>
 .status {
   height: 30px;
-  background: #08060d;
+  background: #0f0f1e;
   padding: 5px;
   margin-bottom: 15px;
 }

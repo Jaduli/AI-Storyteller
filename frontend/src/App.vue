@@ -125,9 +125,10 @@ export default {
 input, textarea {
   resize: none;
   padding: 8px;
+  margin: 3px;
   background: #0f0f1e;
   color: #fff;
-  border: 1px solid #444;
+  border: 1px solid #0f0f1e;
   border-radius: 3px;
   font-family: inherit;
   box-sizing: border-box;
@@ -161,6 +162,20 @@ button:disabled {
   background: #9a2bef;
   cursor: default;
   opacity: 0.7;
+}
+
+alert {
+  background: #ff4d4d;
+  color: white;
+  padding: 10px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+
+checkbox {
+  background: #0f0f1e;
+  color: #fff;
+  border: 1px solid #0f0f1e;
 }
 
 .container {
