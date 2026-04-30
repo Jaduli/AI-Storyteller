@@ -84,7 +84,7 @@ def load_file():
             instructions = data.get("instructions", '')
             content = data.get("content", "")
             summary = data.get("summary", "None.")
-            plot_essentials = data.get("plot_essentials", "None.")
+            story_essentials = data.get("story_essentials", "None.")
             memory_cursor = data.get("memory_cursor", 0)
             summary_cursor = data.get("summary_cursor", 0)
             context_cards = data.get("context_cards", [])
@@ -165,7 +165,7 @@ def save_file():
     # Save new file
     with open(path, 'w', encoding='utf-8') as f:
         json.dump({"story_id": story_id, "instructions": instructions, "content": content, 
-                   "summary": summary, "plot_essentials": plot_essentials, "memory_cursor": memory_cursor, 
+                   "summary": summary, "story_essentials": story_essentials, "memory_cursor": memory_cursor, 
                    "summary_cursor": summary_cursor, "context_cards": context_cards}, 
                   f, ensure_ascii=False, indent=2)
 
