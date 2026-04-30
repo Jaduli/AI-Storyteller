@@ -5,7 +5,7 @@ APPLICATION FEATURES
 - Continue a story with an AI model of your choosing. You may start off with anything in any genre, in any point of view (including second person view).
 - Add custom story context with Story Essentials (always included in prompt) and Context Cards (only included when relevant to story).
 - Add custom instructions to be used in story generation (e.g. storytelling style, point of view, content restrictions).
-- Edit content generated story content in any way (within the context window).
+- Edit generated story content in any way (within the context window).
 - Story memories and summary will be created and used automatically as the story progresses.
 - Save and load stories. The story autosaves after every continuation, and one backup save is generated for each story.
 - Edit generation settings such as model, temperature, and recent story token limit.
