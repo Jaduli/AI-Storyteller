@@ -92,8 +92,11 @@ def load_file():
         # Internal Server Error
         return jsonify({"error": str(e)}), 500
 
+    # Validate story ID
     if not story_id:
         return jsonify({"error": "Story ID missing from file."}), 400
+    if not re.fullmatch(r"\d+", story_id):
+        return jsonify({"error": "Invalid story ID. ID must consist of numbers only."}), 400
 
     return jsonify({"story_id": story_id, "instructions": instructions, "content": content, 
                     "summary": summary, "plot_essentials": plot_essentials, "memory_cursor": memory_cursor,
@@ -405,7 +408,7 @@ def memorize():
             # Some models often include metatext (e.g. "Here are the created memories:") in their output
             # even when explicitly instructed not to. The commented out function below removes the first
             # line of the output and can be used if encountering issues with metatext generation.
-            # It was useful with llama:3, but switching to llama:3.1 seemed to lessen the issue.
+            # It was useful with llama:3 but switching to llama:3.1 seemed to lessen the issue.
             # 
             # new_memory = "\n".join(new_memory.splitlines()[1:]).lstrip("\n")
 
