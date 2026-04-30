@@ -19,7 +19,9 @@ export default {
   },
   data() {
     return {
-      // Random story ID for storing memories in database
+      // Random story ID for storing memories in database.
+      // Uses 32 bits (additional checks to prevent collision
+      // may be required if used on a larger scale).
       story_id: crypto.getRandomValues(new Uint32Array(1))[0],
       // Components
       instructions: '', // Special instructions for the AI to use
@@ -50,47 +52,47 @@ export default {
 
       return text.slice(-max_chars);
     },
-    // Extract past content for memory and summary creation.
-    // Minimum length determines how much content is needed for creating a new memory/summary.
-    // If overlap is true, half of minimum length will be added as overlap with recent story.
-    extractPastContent(cursor, minimum_length, overlap = false) {
+    // Extract past content between cursor and beginning of recent content,
+    // i.e. content that is past the context window. Overlap with recent story 
+    // can be added and is used in summarization to avoid losing context 
+    // between summary actions.
+    extractPastContent(cursor, overlap = 0) {
       const approx_chars_per_token = 4;
-      const recent_story_window = (this.context_length || 4000) * approx_chars_per_token;
+      const recent_story_window = this.context_length * approx_chars_per_token;
 
       let cutoff_index = this.content.length - recent_story_window;
 
-      // Add some overlap with recent content. Used in summarization to avoid losing context 
-      // between summary actions.
-      if (overlap) {
-        cutoff_index += minimum_length / 2;
-      }
+      // Overlap with recent content (default: no overlap)
+      cutoff_index += overlap;
 
+      // Ensure cutoff is not negative (e.g. when content length is less than context window allows)
       cutoff_index = Math.max(0, cutoff_index)
 
-      // Content window is between cursor and cutoff index
+      // Past content window is between cursor and cutoff index
       const content_slice = this.content.slice(cursor, cutoff_index);
 
-      return {past_content: content_slice, cutoff_index, valid: content_slice.length >= minimum_length};
+      return {past_content: content_slice, cutoff_index};
     },
     // Main function to continue the story with the backend API
     async continueStory() {
-      let start = this.displayStart;
+      const recent_story = this.story_editor_content
 
-      // Sync content with story editor
-      if (this.story_editor_content !== this.content.slice(start)) {
-        this.content = this.content.slice(0, start) + this.story_editor_content;
-      }
-
-      // Basic validation to ensure there's enough content to continue
-      if (!this.story_editor_content || this.story_editor_content.trim().length < 20) {
+      // Basic validation to ensure there's enough content to continue story
+      if (!recent_story || recent_story.trim().length < 20) {
         this.status_message = 'Error: Please enter enough story content to continue.';
         return;
+      }
+
+      // Start of recent story content based on context length
+      const start = this.displayStart;
+
+      // Sync content with story editor in case of user edits
+      if (recent_story !== this.content.slice(start)) {
+        this.content = this.content.slice(0, start) + recent_story;
       }
       try {
         this.active_requests++;
         this.status_message = 'Continuing story...';
-
-        const recent_story = this.trimToTokenApprox(this.content);
 
         // Get relevant context cards based on found keywords in recent story
         const context_cards = this.$refs.contextCards.getMatchingContextCards(recent_story);
@@ -128,10 +130,6 @@ export default {
         } else {
           this.content += continued_content;
         }
-
-        // Sync story editor content with new content
-        start = this.displayStart;
-        this.story_editor_content = this.content.slice(start);
         
         // Display full context used in API call
         if (data.full_context) {
@@ -149,15 +147,15 @@ export default {
         if (this.show_token_use && data.tokens_total) {
           this.status_message = 'Total tokens used for continue action: ' + data.tokens_total
         }
-        // Automatically summarize (only happens once enough content is generated)
+        // Automatically summarize (only happens if enough content is past the recent story context window)
         await this.summarizeStory();
 
-        // Automatically save story and turn past context into a memory if file name is set
+        // Automatically turn past context into a memory and save the story if filename is set
         if (this.filename.trim() != '') {
           await this.createMemory();
           await this.saveStory();
         } else {
-          this.status_message = 'Please set file name to save and memorize story.'
+          this.status_message = 'Please set filename to save and memorize story.'
         }
       } catch (err) {
         this.status_message = 'Error continuing story: ' + (err.message || err);
@@ -167,14 +165,24 @@ export default {
     },
     // Function to summarize the story with the backend API
     async summarizeStory() {
-      // Use past story content (+some overlap with recent content) for summary
-      const {past_content, cutoff_index, valid} = this.extractPastContent(this.summary_cursor, 4000, true);
+      // Minimum past content length (in characters) to create a new summary.
+      // default: 4000
+      const minimum_length_chars = 4000;
+      // Use half of minimum length as overlap with recent story.
+      // This prevents context that falls out of recent content window
+      // from being lost between summary actions.
+      const overlap = minimum_length_chars / 2;
+
+      const {past_content, cutoff_index} = this.extractPastContent(
+                                             this.summary_cursor, 
+                                             minimum_length_chars, 
+                                             overlap
+                                           );
 
       // Return if there is not enough content to summarize
-      if (!valid) {
+      if (past_content.length < minimum_length_chars) {
         return;
       }
-
       try {
         this.active_requests++;
         this.status_message = 'Summarizing story, please wait...'
@@ -198,9 +206,13 @@ export default {
           this.status_message = 'Backend error summarizing story: ' + data.error;
           return;
         }
+        if (!data.summary || data.summary.trim() === '') {
+          this.status_message = 'Error: Summary action returned empty content.';
+          return;
+        }
+
         this.summary = data.summary || '';
         this.status_message = '';
-        console.log('Summary created with content:\n' + past_content);
         
         // Move summary cursor forward to cutoff index for next summary action
         this.summary_cursor = cutoff_index;
@@ -216,14 +228,17 @@ export default {
     },
     // Function to create a memory with the backend API
     async createMemory() {
-      // Use past story content for new memory
-      const {past_content, cutoff_index, valid} = this.extractPastContent(this.memory_cursor, 7000);
+      // Minimum past content length to create a new memory.
+      // default: 7000
+      const minimum_length_chars = 7000;
+
+      // Use past story content for new memory (no overlap)
+      const {past_content, cutoff_index} = this.extractPastContent(this.memory_cursor, 7000);
 
       // Return if there is not enough content to memorize
-      if (!valid) {
+      if (past_content.length < minimum_length_chars) {
         return;
       }
-
       try {
         this.active_requests++;
         this.status_message = 'Creating a new memory, please wait...'
@@ -263,7 +278,7 @@ export default {
     },
     // Function to save the story to the backend API
     async saveStory(sync = true) {
-      if (!this.filename) {
+      if (!this.filename || this.filename.trim() === '') {
         this.status_message = 'Please enter a filename to save the story.';
         return;
       }
@@ -275,7 +290,6 @@ export default {
           this.content = this.content.slice(0, start) + this.story_editor_content;
         }
       }
-
       try {
         this.active_requests++;
 
@@ -284,6 +298,7 @@ export default {
         
         const context_cards = this.$refs.contextCards.cards || [];
 
+        // Use POST to save story
         const res = await fetch('/api/save', {
           method: 'POST',
           headers: {
@@ -319,18 +334,24 @@ export default {
     },
     // Function to load the story from backend API
     async loadStory() {
-      if (!this.filename) {
-        this.status_message = 'Please enter a filename to load the story.';
-        return;
-      }
       try {
         this.active_requests++;
         this.status_message = 'Loading story...';
 
-        const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
-        const res = await fetch('/api/load?filename=' + encodeURIComponent(filename));
-        const data = await res.json();
+        let data = {};
+      
+        // Fetch file content if filename is set
+        if (this.filename && this.filename.trim() !== '') {
+          // Ensure filename ends with .json
+          const filename = this.filename.endsWith('.json') ? this.filename : this.filename + '.json';
 
+          // Use GET to load story (default method for fetch).
+          // Encode filename to prevent issues with URL special characters such as '&' and '='.
+          const res = await fetch('/api/load?filename=' + encodeURIComponent(filename));
+          data = await res.json();
+        }
+
+        // Set values, default to new story
         this.story_id = data.story_id || crypto.getRandomValues(new Uint32Array(1))[0];
         this.instructions = data.instructions || '';
         this.content = data.content || '';
@@ -339,13 +360,13 @@ export default {
         this.memory_cursor = data.memory_cursor || 0;
         this.summary_cursor = data.summary_cursor || 0;
         this.$refs.contextCards.cards = data.context_cards || [];
-        
-        // Initialize story editor content based on current content length
-        const start = this.displayStart;
-        this.story_editor_content = this.content.slice(start);
 
         if (data.error) {
-          this.status_message = 'Back end: ' + data.error + ' New story created.';
+          this.status_message = 'Backend: ' + data.error + ' New story created.';
+          return;
+        }
+        else if (!this.filename || this.filename.trim() === '') {
+          this.status_message = 'Filename not set. New story created.'
           return;
         }
         // Scroll to bottom after loading story
@@ -353,7 +374,6 @@ export default {
           const el = this.$refs.storyBox;
           el.scrollTop = el.scrollHeight;
         });
-
         this.status_message = 'Story loaded successfully.';
       } catch (err) {
         this.status_message = 'Error loading story: ' + (err.message || err);
@@ -380,44 +400,39 @@ export default {
     }
   },
   watch: {
-    // Update story_editor_content when content changes
+    // Update story_editor_content when content changes, e.g. when continuing or loading story
     content() {
       const start = this.displayStart;
       this.story_editor_content = this.content.slice(start);
     },
-    // Watch for changes in context_length to trigger save and reload of story before 
-    // applying new context window. This is to ensure that content isn't lost when changing 
+    // Watch for changes in context_length to ensure that content isn't lost when changing 
     // context window size and that the story editor properly reflects the new context window.
     async context_length(new_val, old_val) {
       // Prevent unnecessary triggers
       if (new_val === old_val) return;
 
-      while (this.isLoading) {
-        // Wait for any active requests to finish before handling context length change
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // Prevent editing context limit while other actions are in progress
+      if (this.isLoading) {
+        alert("Please wait for ongoing actions to finish before changing the token limit.")
+        return;
       }
       try {
-        const approx = 4;
-        const old_max_chars = old_val * approx;
+        const approx_chars_per_token = 4;
+        const old_max_chars = old_val * approx_chars_per_token;
         const old_start = Math.max(0, this.content.length - old_max_chars);
 
-        // Sync using old start
+        // Sync content with editor using old start to avoid losing user edits
         if (this.story_editor_content !== this.content.slice(old_start)) {
           this.content = this.content.slice(0, old_start) + this.story_editor_content;
         }
 
-        // Save and reload story to apply new context window and update 
-        // story editor content based on new display start point
-        if (this.filename.trim() !== '') {
-          await this.saveStory(false); // Don't sync to new start before saving
-          await this.loadStory();
-          this.status_message = 'Story saved and reloaded with new context window.';
-        }
-        else {
-          this.status_message = 'Limit set successfully.';
-        }
+        // Sync editor to display story content with new context length
+        const new_start = this.displayStart;
+        this.story_editor_content = this.content.slice(new_start);
+
+        this.status_message = 'Limit set. Editor updated with new token limit.';
       } catch (err) {
-        this.status_message = 'Error handling context resize: ' + (err.message || err);
+        this.status_message = 'Error setting token limit: ' + (err.message || err);
       }
     }
   }
@@ -509,7 +524,7 @@ export default {
       <textarea v-model="plot_essentials" 
       rows="12" 
       cols="80" 
-      placeholder="Key plot points, character details, or world-building elements. This will be used as context in story generation.">
+      placeholder="Key plot points, character details, or world-building elements. This will always be used as context in story generation.">
       </textarea>
       <div class="tab-footer-space"></div>
     </div>
@@ -523,7 +538,7 @@ export default {
       <textarea v-model="sent_context" 
       rows="12" 
       cols="80" 
-      placeholder="Context sent to story generation will show up here."
+      placeholder="Context sent to story generation will appear here."
       readonly>
       </textarea>
       <div class="tab-footer-space"></div>

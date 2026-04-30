@@ -34,6 +34,9 @@ export default {
     }
   },
   methods: {
+    // Load backend config before starting the app. If backend is not ready, a new call
+    // will be made every 2 seconds until a connection is made. This prevents frontend
+    // errors due to backend being unavailable.
     async loadConfig(delay = 2000) {
       while (!this.config_ready) {
         try {
@@ -45,7 +48,8 @@ export default {
 
           const data = await res.json();
 
-          // If local AI is enabled, show toggle and set use_local to true by default
+          // If local AI is enabled, show toggle and set use_local to true by default.
+          // Otherwise local AI features are disabled.
           this.show_local_toggle = data.local_ai_enabled;
           this.use_local = data.local_ai_enabled;
           
@@ -65,8 +69,8 @@ export default {
     }
   },
   async mounted() {
-    // Load backend config. Wait 2 seconds before retry.
-    this.loadConfig(2000);
+    // Load backend config
+    this.loadConfig();
   }
 }
 </script>

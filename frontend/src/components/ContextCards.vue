@@ -76,7 +76,7 @@ export default {
     <div class="context-card">
     <h3>Existing Cards</h3>
     <h4>
-      Cards with keywords matching recent story content will be included as context in AI generation.
+      Cards with keywords matching recent story content will be included as context in story generation.
       Cards will automatically be saved when edited.
     </h4>
     </div>

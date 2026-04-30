@@ -145,7 +145,7 @@ export default {
         placeholder="4000"
       />
       <button @click="setContextLength(temp_context_length)">Set Limit</button>
-      <span title="Setting the limit will automatically save and reload any loaded story.">
+      <span title="Setting the limit will automatically update the editor to display new context length.">
         ⓘ
       </span>
     </div>
