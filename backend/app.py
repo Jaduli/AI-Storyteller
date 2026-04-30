@@ -82,9 +82,9 @@ def load_file():
             data = json.load(f)
             story_id = data.get("story_id")
             instructions = data.get("instructions", '')
-            content = data.get("content", "")
-            summary = data.get("summary", "None.")
-            story_essentials = data.get("story_essentials", "None.")
+            content = data.get("content", '')
+            summary = data.get("summary", '')
+            story_essentials = data.get("story_essentials", '')
             memory_cursor = data.get("memory_cursor", 0)
             summary_cursor = data.get("summary_cursor", 0)
             context_cards = data.get("context_cards", [])
@@ -106,21 +106,14 @@ def load_file():
 """
 /save
 
-Save story to file. Filename and story_id are required. 
+Save story to file. Valid filename and story_id are required. 
 Returns 400 if filename or story_id is missing. 
 """
 @app.route('/api/save', methods=['POST'])
 def save_file():
     data = request.json
-    filename = data.get('filename')
-    story_id = data.get('story_id')
-    instructions = data.get('instructions')
-    content = data.get('content')
-    summary = data.get('summary', 'None.')
-    story_essentials = data.get('story_essentials', 'None.')
-    memory_cursor = data.get('memory_cursor', 0)
-    summary_cursor = data.get('summary_cursor', 0)
-    context_cards = data.get('context_cards', [])
+    filename = data.get("filename")
+    story_id = data.get("story_id")
 
     # Validate story ID
     if not story_id:
@@ -162,6 +155,15 @@ def save_file():
 
         # Rename current file to backup
         os.rename(path, backup_path)
+
+    # Get rest of saved data
+    instructions = data.get("instructions", '')
+    content = data.get("content", '')
+    summary = data.get("summary", '')
+    story_essentials = data.get("story_essentials", '')
+    memory_cursor = data.get("memory_cursor", 0)
+    summary_cursor = data.get("summary_cursor", 0)
+    context_cards = data.get("context_cards", [])
 
     # Save new file
     with open(path, 'w', encoding='utf-8') as f:
