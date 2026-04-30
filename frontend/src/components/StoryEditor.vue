@@ -87,11 +87,12 @@ export default {
         this.status_message = 'Error: Please enter enough story content to continue.';
         return;
       }
-      // Sync content with editor for any user edits before continuing story
-      syncContentWithEditor();
       try {
         this.active_requests++;
         this.status_message = 'Continuing story...';
+
+        // Sync content with editor for any user edits before continuing story
+        this.syncContentWithEditor();
 
         // Get relevant context cards based on found keywords in recent story
         const context_cards = this.$refs.contextCards.getMatchingContextCards(recent_story);
@@ -281,16 +282,17 @@ export default {
         this.status_message = 'Please enter a filename to save the story.';
         return;
       }
-      if (sync) {
-        // Sync content with story editor before saving
-        syncContentWithEditor();
-      }
       try {
         this.active_requests++;
         // Only change status message if this is the only active request to
         // avoid confusion with other actions.
         if (this.active_requests === 1) {
           this.status_message = 'Saving story...';
+        }
+
+        if (sync) {
+          // Sync content with story editor before saving
+          this.syncContentWithEditor();
         }
 
         // Ensure filename ends with .json
@@ -331,7 +333,8 @@ export default {
         this.active_requests--;
       }
     },
-    // Function to load the story from backend API
+    // Function to load the story from backend API.
+    // If file is not found or filename is empty/invalid, creates a new story instead.
     async loadStory() {
       try {
         this.active_requests++;
