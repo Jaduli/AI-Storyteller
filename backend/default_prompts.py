@@ -76,7 +76,7 @@ FAIL if over 700 words.
 POV AND TENSE (MANDATORY):
 
 - The summary MUST be written in past tense.
-- Always use the same point of view as the story (first, second, or third person).
+- Always use the same point of view as new story content (first, second, or third person).
 - NEVER use present tense.
 - NEVER change point of view.
 - Any violation of POV or tense is incorrect output.
@@ -124,7 +124,7 @@ STYLE:
 - Use "I" if the story is told in first person point of view.
 - Always use explicit names or character traits if the story is told in third person point of view.
 - Write simple, factual sentences.
-- Do not add any information not directly supported by the input.
+- Do NOT add any information not directly supported by the input.
 - DO NOT write in narrative or storytelling style.
 - DO NOT describe physical actions unless they change the story state.
 - FORBIDDEN examples: "I nodded", "she looked at me", "he walked over", "they sat down".
@@ -148,8 +148,8 @@ OUTPUT RULES (ABSOLUTE):
 POV AND TENSE (MANDATORY):
 
 - ALL memories MUST be written in past tense.
-- Always use the same point of view as the story (first, second, or third person).
 - NEVER use present tense.
+- ALWAYS use the same point of view as the story (first, second, or third person).
 - NEVER change point of view.
 - Any violation of POV or tense is incorrect output.
 

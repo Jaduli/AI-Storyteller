@@ -27,7 +27,7 @@ export default {
       instructions: '', // Special instructions for the AI to use
       content: '',
       summary: '',
-      plot_essentials: '',
+      story_essentials: '',
       sent_context: '', // Full context sent for story generation
       status_message: '',
       // Values
@@ -107,7 +107,7 @@ export default {
             story_id: this.story_id,
             instructions: this.instructions,
             summary: this.summary,
-            plot_essentials: this.plot_essentials,
+            story_essentials: this.story_essentials,
             context_cards: context_cards,
             recent_story: recent_story,
             top_p: this.top_p || 0.9,
@@ -310,7 +310,7 @@ export default {
             instructions: this.instructions,
             content: this.content,
             summary: this.summary,
-            plot_essentials: this.plot_essentials,
+            story_essentials: this.story_essentials,
             memory_cursor: this.memory_cursor,
             summary_cursor: this.summary_cursor,
             context_cards: context_cards
@@ -356,7 +356,7 @@ export default {
         this.instructions = data.instructions || '';
         this.content = data.content || '';
         this.summary = data.summary || '';
-        this.plot_essentials = data.plot_essentials || '';
+        this.story_essentials = data.story_essentials || '';
         this.memory_cursor = data.memory_cursor || 0;
         this.summary_cursor = data.summary_cursor || 0;
         this.$refs.contextCards.cards = data.context_cards || [];
@@ -520,8 +520,8 @@ export default {
     </div>
 
     <div class="container" v-show="active_tab === 'essentials'">
-      <h2>Plot Essentials</h2>
-      <textarea v-model="plot_essentials" 
+      <h2>Story Essentials</h2>
+      <textarea v-model="story_essentials" 
       rows="12" 
       cols="80" 
       placeholder="Key plot points, character details, or world-building elements. This will always be used as context in story generation.">

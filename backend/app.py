@@ -99,7 +99,7 @@ def load_file():
         return jsonify({"error": "Invalid story ID. ID must consist of numbers only."}), 400
 
     return jsonify({"story_id": story_id, "instructions": instructions, "content": content, 
-                    "summary": summary, "plot_essentials": plot_essentials, "memory_cursor": memory_cursor,
+                    "summary": summary, "story_essentials": story_essentials, "memory_cursor": memory_cursor,
                     "summary_cursor":summary_cursor, "context_cards": context_cards})
 
 """
@@ -116,15 +116,20 @@ def save_file():
     instructions = data.get('instructions')
     content = data.get('content')
     summary = data.get('summary', 'None.')
-    plot_essentials = data.get('plot_essentials', 'None.')
+    story_essentials = data.get('story_essentials', 'None.')
     memory_cursor = data.get('memory_cursor', 0)
     summary_cursor = data.get('summary_cursor', 0)
     context_cards = data.get('context_cards', [])
 
-    if not filename:
-        return jsonify({"error": "Filename is required."}), 400
+    # Validate story ID
     if not story_id:
         return jsonify({"error": "Story ID is required."}), 400
+    if not re.fullmatch(r"\d+", story_id):
+        return jsonify({"error": "Invalid story ID. ID must consist of numbers only."}), 400
+
+    # Validate file
+    if not filename:
+        return jsonify({"error": "Filename is required."}), 400
     
     # Basic validation to prevent directory traversal or invalid filenames.
     # Only allow .json files.
@@ -194,7 +199,7 @@ def continue_story():
         return jsonify({"error": "Story ID is required."}), 400
     
     user_instructions = data.get('instructions')
-    plot_essentials = data.get('plot_essentials', 'None.')
+    story_essentials = data.get('story_essentials', 'None.')
     summary = data.get('summary', 'None.')
     context_cards = data.get('context_cards', 'None.')
 
@@ -220,7 +225,7 @@ def continue_story():
     # Context ordered based on which content is most likely to stay static (unedited).
     # This will increase rate of cache hits in API call -> cheaper responses (if supported by API provider).
     full_prompt = (
-        "[Plot Essentials]\n" + plot_essentials +
+        "[Story Essentials]\n" + story_essentials +
         "\n\n[Story Summary]\n" + summary +
         "\n\n[Past Memories]\n" + memory_block +
         "\n\n[Relevant Context]\n" + context_cards +
@@ -243,8 +248,8 @@ def continue_story():
         "max_tokens": max_tokens,
         "top_p": top_p,
         "temperature": temperature,
-        "presence_penalty": 0.3, # Increases the likelihood of introducing new content vs repeating existing content.
-        "frequency_penalty": 0.3 # Decreases the likelihood of repeating words or phrases.
+        "presence_penalty": 0.3, # Increases the likelihood of introducing new content vs repeating existing content
+        "frequency_penalty": 0.3 # Decreases the likelihood of repeating words or phrases
     }
 
     # Disable "thinking" phase for DeepSeek models to reduce output token use 
@@ -309,7 +314,8 @@ def summarize():
                 {"role": "user", "content": content}
             ],
             "options": {
-                "temperature": 0.2
+                "temperature": 0.2, # Low temperature for summary creation
+                "num_predict": 1000 # Token limit to prevent unnecessarily responses
             },
             "stream": False
         })
@@ -318,7 +324,6 @@ def summarize():
             data = response.json()
 
             new_summary = data.get("message", {}).get("content", "").strip()
-
             tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
 
         else:
@@ -336,7 +341,8 @@ def summarize():
                 {"role": "system", "content": SUMMARIZATION_SYS_PROMPT},
                 {"role": "user", "content": content}
             ],
-            "temperature": 0.2
+            "temperature": 0.2,
+            "max_tokens": 1000
         }
 
         # Call external AI API with error handling
@@ -394,8 +400,8 @@ def memorize():
                 {"role": "user", "content": content}
             ],
             "options": {
-                "num_predict": 200,
-                "temperature": 0.0
+                "temperature": 0.0, # Low temperature for best consistency
+                "num_predict": 200
             },
             "stream": False
         })
