@@ -20,91 +20,92 @@ export default {
   },
   methods: {
     setContextLength(new_length) {
-      let num = Number(new_length)
+      let num = Number(new_length);
 
       // Handle invalid input
       if (isNaN(num)) {
-        num = this.context_length || 4000 // fallback
+        num = this.context_length || 4000; // fallback
       } else {
         // Clamp to 1-32000
-        num = Math.min(Math.max(num, 1), 32000)
+        num = Math.min(Math.max(num, 1), 32000);
       }
-      this.$emit('update:context_length', num)
+      this.temp_context_length = num;
+      this.$emit('update:context_length', num);
     }
   },
   computed: {
     // Create computed properties with getters and setters to emit value updates
     mainModelVal: {
       get() {
-        return this.main_model
+        return this.main_model;
       },
       set(v) {
         // Default to 'llama-3.1-8b-instant' if input is empty
-        const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant'
-        this.$emit('update:main_model', value)
+        const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant';
+        this.$emit('update:main_model', value);
       }
     },
     memModelVal: {
       get() {
-        return this.mem_model
+        return this.mem_model;
       },
       set(v) {
         // Default to 'llama-3.1-8b-instant' if input is empty
-        const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant'
-        this.$emit('update:mem_model', value)
+        const value = v && v.trim() !== '' ? v : 'llama-3.1-8b-instant';
+        this.$emit('update:mem_model', value);
       }
     },
     localVal: {
-      get() { return this.use_local },
-      set(v) { this.$emit('update:use_local', v) }
+      get() { return this.use_local; },
+      set(v) { this.$emit('update:use_local', v); }
     },
     tokenVal: {
-      get() { return this.show_token_use },
-      set(v) { this.$emit('update:show_token_use', v) }
+      get() { return this.show_token_use; },
+      set(v) { this.$emit('update:show_token_use', v); }
     },
     topPVal: {
-      get() { return this.top_p },
+      get() { return this.top_p; },
       set(v) {
-        let num = Number(v)
+        let num = Number(v);
 
         // Handle invalid input
         if (isNaN(num)) {
-          num = this.top_p || 0.9 // fallback
+          num = this.top_p || 0.9; // fallback
         } else {
           // Clamp to 0-1
-          num = Math.min(Math.max(num, 0), 1)
+          num = Math.min(Math.max(num, 0), 1);
         }
-        this.$emit('update:top_p', num)
+        this.$emit('update:top_p', num);
       }
     },
     temperatureVal: {
       get() { return this.temperature },
       set(v) {
-        let num = Number(v)
+        let num = Number(v);
 
         // Handle invalid input
         if (isNaN(num)) {
-          num = this.temperature || 0.8 // fallback
+          num = this.temperature || 0.8; // fallback
         } else {
           // Clamp to 0-2
-          num = Math.min(Math.max(num, 0), 2)
+          num = Math.min(Math.max(num, 0), 2);
         }
-        this.$emit('update:temperature', num)
+        this.$emit('update:temperature', num);
       }
     },
     maxTokensVal: {
-      get() { return this.max_tokens },
+      get() { return this.max_tokens; },
       set(v) {
-        let num = Number(v)
+        let num = Number(v);
 
         // Handle invalid input
         if (isNaN(num)) {
-          num = this.max_tokens || 200 // fallback
+          num = this.max_tokens || 200; // fallback
         } else {
           // Clamp to 10-1000
-          num = Math.min(Math.max(num, 10), 1000)
+          num = Math.min(Math.max(num, 10), 1000);
         }
-        this.$emit('update:max_tokens', num)
+        this.$emit('update:max_tokens', num);
       }
     }
   }

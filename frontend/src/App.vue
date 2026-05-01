@@ -26,7 +26,7 @@ export default {
       // Higher values mean more randomness and creativity, lower values improve 
       // consistency with story context (e.g. story essentials and memories).
       top_p: 0.9,
-      temperature: 0.8,
+      temperature: 1,
       // Max tokens controls the length of returned content in story generation.
       max_tokens: 200,
       show_settings: false,
