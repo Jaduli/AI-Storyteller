@@ -416,11 +416,6 @@ export default {
       // Prevent unnecessary triggers
       if (new_val === old_val) return;
 
-      // Prevent editing context limit while other actions are in progress
-      if (this.isLoading) {
-        alert('Please wait for ongoing actions to finish before changing the token limit.');
-        return;
-      }
       try {
         const old_max_chars = old_val * APPROX_CHARS_PER_TOKEN;
         const old_start = Math.max(0, this.content.length - old_max_chars);
