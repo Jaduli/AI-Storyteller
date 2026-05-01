@@ -10,7 +10,7 @@ export default {
   components: {
     ContextCards
   },
-  emits: ['tab-changed'],
+  emits: ['tab-changed', 'loading-changed'],
   props: {
     main_model: String,
     mem_model: String,
@@ -405,6 +405,10 @@ export default {
     content() {
       const start = this.displayStart;
       this.story_editor_content = this.content.slice(start);
+    },
+    // Emit loading change events so parent can disable settings controls when requests are active
+    isLoading(value) {
+      this.$emit('loading-changed', value);
     },
     // Watch for changes in context_length to ensure that content isn't lost when changing 
     // context window size and that the story editor properly reflects the new context window.

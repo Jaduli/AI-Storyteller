@@ -10,7 +10,8 @@ export default {
     top_p: Number,
     temperature: Number,
     max_tokens: Number,
-    context_length: Number
+    context_length: Number,
+    is_loading: Boolean
   },
   data() {
     return {
@@ -143,9 +144,10 @@ export default {
         max="32000" 
         min="1"
         placeholder="4000"
+        :disabled="is_loading"
       />
-      <button @click="setContextLength(temp_context_length)">Set Limit</button>
-      <span title="Setting the limit will automatically update the editor to display new context length.">
+      <button @click="setContextLength(temp_context_length)" :disabled="is_loading">Set Limit</button>
+      <span title="Setting the limit will update the editor to display content with new context length.">
         ⓘ
       </span>
     </div>

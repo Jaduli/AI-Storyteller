@@ -30,7 +30,8 @@ export default {
       // Max tokens controls the length of returned content in story generation.
       max_tokens: 200,
       show_settings: false,
-      config_ready: false
+      config_ready: false,
+      story_is_loading: false
     }
   },
   methods: {
@@ -88,6 +89,7 @@ export default {
       :top_p="top_p"
       :temperature="temperature"
       :max_tokens="max_tokens"
+      @loading-changed="story_is_loading = $event"
     />
     <button @click="show_settings = !show_settings">
       {{ show_settings ? 'Hide Settings' : 'Show Settings' }}
@@ -104,6 +106,7 @@ export default {
       :top_p="top_p"
       :temperature="temperature"
       :max_tokens="max_tokens"
+      :is_loading="story_is_loading"
 
       @update:main_model="main_model = $event"
       @update:mem_model="mem_model = $event"
@@ -162,20 +165,6 @@ button:disabled {
   background: #9a2bef;
   cursor: default;
   opacity: 0.7;
-}
-
-alert {
-  background: #ff4d4d;
-  color: white;
-  padding: 10px;
-  border-radius: 3px;
-  margin-bottom: 10px;
-}
-
-checkbox {
-  background: #0f0f1e;
-  color: #fff;
-  border: 1px solid #0f0f1e;
 }
 
 .container {
