@@ -190,7 +190,7 @@ def continue_story():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     recent_story = data.get('recent_story')
-    if not recent_story or recent_story.strip() == "":
+    if not recent_story or recent_story.strip() == '':
         return jsonify({"error": "Empty story content."}), 400
     
     model = data.get('model')
@@ -271,7 +271,7 @@ def continue_story():
 
     continued_content = result["choices"][0]["message"]["content"]
 
-    if not continued_content or continued_content.strip() == "":
+    if not continued_content or continued_content.strip() == '':
         return jsonify({"error": "AI API returned empty content."}), 500
 
     trimmed = utils.trim_incomplete_sentences(continued_content)
@@ -296,7 +296,7 @@ def summarize():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     content = data.get('content')
-    if not content or content.strip() == "":
+    if not content or content.strip() == '':
         return jsonify({"error": "Empty content."}), 400
     
     local = data.get('local')
@@ -305,7 +305,7 @@ def summarize():
     if not model:
         return jsonify({"error": "Model is required."}), 400
     
-    new_summary = ""
+    new_summary = ''
     tokens_total = -1
 
     if (local and local == True and LOCAL_AI_ENABLED):
@@ -324,10 +324,10 @@ def summarize():
         })
 
         if response.status_code == 200:
-            data = response.json()
+            response_data = response.json()
 
-            new_summary = data.get("message", {}).get("content", "").strip()
-            tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+            new_summary = response_data.get("message", {}).get("content", '').strip()
+            tokens_total = response_data.get("prompt_eval_count", 0) + response_data.get("eval_count", 0)
 
         else:
             return jsonify({"error": response.text}), response.status_code
@@ -378,7 +378,7 @@ def memorize():
         return jsonify({"error": "Missing or invalid JSON body."}), 400
 
     content = data.get('content')
-    if not content or content.strip() == "":
+    if not content or content.strip() == '':
         return jsonify({"error": "Empty content."}), 400
     
     local = data.get('local')
@@ -391,7 +391,7 @@ def memorize():
     if not story_id:
         return jsonify({"error": "Story ID is required."}), 400
     
-    new_memory = ""
+    new_memory = ''
     tokens_total = -1
 
     if (local and local == True and LOCAL_AI_ENABLED):
@@ -410,9 +410,9 @@ def memorize():
         })
 
         if response.status_code == 200:
-            data = response.json()
+            response_data = response.json()
 
-            new_memory = data.get("message", {}).get("content", "").strip()
+            new_memory = response_data.get("message", {}).get("content", '').strip()
 
             # Some models often include metatext (e.g. "Here are the created memories:") in their output
             # even when explicitly instructed not to. The commented out function below removes the first
@@ -421,7 +421,7 @@ def memorize():
             # 
             # new_memory = "\n".join(new_memory.splitlines()[1:]).lstrip("\n")
 
-            tokens_total = data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+            tokens_total = response_data.get("prompt_eval_count", 0) + response_data.get("eval_count", 0)
 
         else:
             return {"error": response.text}, response.status_code

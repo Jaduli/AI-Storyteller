@@ -168,7 +168,6 @@ button:disabled {
 }
 
 .container {
-  border: 1px solid #0f0f1e;
   border-radius: 5px;
   padding: 15px;
   background: #1a1a2e;

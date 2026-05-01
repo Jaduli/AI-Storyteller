@@ -59,7 +59,7 @@ PROJECT INFORMATION
 Technologies used
 - Docker for containerization
 - Backend: Python + Flask + SQLite + FAISS
-- Frontend: Vue + Nginx
+- Frontend: Vue.js + Nginx
 - Local AI: Ollama (current model: llama3.1:8b)
 
 Story files are saved as JSON. Memories are kept in a SQLite database. FAISS (Facebook AI Similarity Search, https://faiss.ai/index.html) is used to fetch memories relevant to current story context from the database.
@@ -78,6 +78,6 @@ By default, there are no restrictions in place for content generation beyond the
 
 AI USAGE INFORMATION
 
-This program has been made in VSCode with GitHub Copilot (free version for TUNI students) tuned on. Model used is GPT-5 mini. Copilot has helped with commenting, debugging, autocompletion, CSS, and generating useful functions such as for text trimming. AI has NOT been used in the overall structure, project idea, or technology selection.
+The application has been made in VSCode with GitHub Copilot (free version for TUNI students) tuned on. Model used is GPT-5 mini. Copilot has helped with commenting, debugging, autocompletion, CSS, and generating useful functions such as for text trimming. AI has NOT been used in the overall structure, project idea, or technology selection.
 
 Prompts for story generation (in backend/default_prompts.py) have been improved with the help of ChatGPT-5. As FAISS is a new technology for me, ChatGPT-5 has also been used to help generate and understand code found in backend/database.py.
