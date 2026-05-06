@@ -8,6 +8,9 @@ from default_prompts import GENERATION_SYS_PROMPT, SUMMARIZATION_SYS_PROMPT, MEM
 import utils
 import database
 
+# Maximum file size for save files
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
 # Initialize the database
 database.init_db()
 
@@ -107,7 +110,8 @@ def load_file():
 /save
 
 Save story to file. Valid filename and story_id are required. 
-Returns 400 if filename or story_id is missing. 
+Returns 400 if filename or story_id is missing,
+413 (Payload Too Large) if file size exceeds set limit.
 """
 @app.route('/api/save', methods=['POST'])
 def save_file():
@@ -165,12 +169,31 @@ def save_file():
     summary_cursor = data.get("summary_cursor", 0)
     context_cards = data.get("context_cards", [])
 
+    # Build payload
+    save_data = {
+        "story_id": story_id,
+        "instructions": instructions,
+        "content": content,
+        "summary": summary,
+        "story_essentials": story_essentials,
+        "memory_cursor": memory_cursor,
+        "summary_cursor": summary_cursor,
+        "context_cards": context_cards
+    }
+
+    # Serialize to JSON
+    json_string = json.dumps(save_data, ensure_ascii=False, indent=2)
+
+    # Ensure file size doesn't exceed limit to prevent malicious file uploads and server overload
+    file_size = len(json_string.encode('utf-8'))
+    if file_size > MAX_FILE_SIZE:
+        return jsonify({
+            "error": f"File size exceeds limit of {MAX_FILE_SIZE // (1024 * 1024)} MB."
+        }), 413
+
     # Save new file
     with open(path, 'w', encoding='utf-8') as f:
-        json.dump({"story_id": story_id, "instructions": instructions, "content": content, 
-                   "summary": summary, "story_essentials": story_essentials, "memory_cursor": memory_cursor, 
-                   "summary_cursor": summary_cursor, "context_cards": context_cards}, 
-                  f, ensure_ascii=False, indent=2)
+        f.write(json_string)
 
     return jsonify({"message": "File saved as " + filename + "."})
 
