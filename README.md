@@ -43,7 +43,7 @@ The container can be stopped with CTRL+C in the terminal. Once built, the contai
 
 GENERATION INSRUCTIONS
 
-Once you have the app running, begin a story by writing in the editor or load a previous story with its filename. Click on 'Continue Story' for the AI to continue the story from where it left off. The AI uses all of summary and story essentials, relevant context cards, and up to two most recent + two most relevant past memories for context. Length of recent story used as context can be adjusted in the 'Settings'-menu (has no effect on other context fields). You may enable a setting to display total tokens used in each API call. The full prompt & system instructions used in story generation can be seen in the 'Sent Context' tab. For more detailed explanations on how each component works, read chapter 2.4 of ProjectDocumentation.pdf.
+Once you have the app running, begin a story by writing in the editor or load a previous story with its filename. Click on 'Continue Story' for the AI to continue the story from where it left off. The AI uses all of summary and story essentials, up to five relevant context cards, and up to two most recent + two most relevant past memories for context. Length of recent story used as context can be adjusted in the 'Settings'-menu (has no effect on other context fields). You may enable a setting to display total tokens used in each API call. The full prompt & system instructions used in story generation can be seen in the 'Sent Context' tab. For more detailed explanations on how each component works, read chapter 2.4 of ProjectDocumentation.pdf.
 
 The application includes a simple example scenario which can be accessed with the file name 'example' or 'example.json'. After a successful story continuation, you can look through 'Sent Context' tab to see how different context fields are included in story generation.
 
@@ -78,6 +78,6 @@ By default, there are no restrictions in place for content generation beyond the
 
 AI USAGE INFORMATION
 
-The application has been made in VSCode with GitHub Copilot (free version for TUNI students) tuned on. Model used is GPT-5 mini. Copilot has helped with commenting, debugging, autocompletion, CSS, and generating useful functions such as for text trimming. AI has NOT been used in the overall structure, project idea, or technology selection.
+The application has been made in VSCode with GitHub Copilot (free version for TUNI students) tuned on. Model used is GPT-5 mini. Copilot has helped with commenting, debugging, autocompletion, CSS, and generating useful functions such as for trimming text. AI has NOT been used in the overall structure, project idea, or technology selection.
 
 Prompts for story generation (in backend/default_prompts.py) have been improved with the help of ChatGPT-5. As FAISS is a new technology for me, ChatGPT-5 has also been used to help generate and understand code found in backend/database.py.
