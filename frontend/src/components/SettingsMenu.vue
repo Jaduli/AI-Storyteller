@@ -191,5 +191,6 @@ export default {
 <style scoped>
 .custom-checkbox {
   accent-color: #aa3bff;
+  cursor: pointer;
 }
 </style>

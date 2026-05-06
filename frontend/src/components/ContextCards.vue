@@ -32,13 +32,13 @@ export default {
       for (const card of this.cards) {
         // Check if any keyword is in the text
         for (const keyword of card.keywords) {
-          if (lower_text.includes(keyword.toLowerCase())) {
+          if (lower_text.includes(keyword.trim().toLowerCase())) {
             matching.push(card.content);
             break; // Only add card once even if multiple keywords match
           }
         }
 
-        // Stop if we have 5 matching cards
+        // To avoid adding too much context, stop if we have 5 matching cards
         if (matching.length >= 5) {
           break;
         }

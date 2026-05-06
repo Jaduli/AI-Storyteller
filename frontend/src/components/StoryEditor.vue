@@ -125,12 +125,15 @@ export default {
 
         const continued_content = data.continued_content || '';
 
-        // Append continued content to story with proper spacing
-        if (recent_story.slice(-1) != '\n') {
-          this.content += ('\n\n' + continued_content);
-        } else {
-          this.content += continued_content;
-        }
+        // Append continued content to story with proper spacing (\n\n + new content)
+        // Count existing newlines at end of text
+        const matching_count = recent_story.match(/\n*$/)[0].length;
+
+        // Add 0-2 newlines based on existing count. This ensures \n\n in case of
+        // 0-2 existing newlines but does not remove newlines above the limit.
+        const newline_count = Math.max(0, 2 - matching_count);
+
+        this.content += '\n'.repeat(newline_count) + continued_content;
         
         // Display full context used in API call
         if (data.full_context) {
@@ -158,7 +161,7 @@ export default {
         } else {
           this.status_message = 'Please set filename to save and memorize story.'
         }
-      } catch (err) {
+      }catch (err) {
         this.status_message = 'Error continuing story: ' + (err.message || err);
       } finally {
         this.active_requests--;

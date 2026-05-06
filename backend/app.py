@@ -228,7 +228,7 @@ def continue_story():
     # Context ordered based on which content is most likely to stay static (unedited).
     # This will increase rate of cache hits in API call -> cheaper responses (if supported by API provider).
     full_prompt = (
-        "[Story Essentials]\n" + story_essentials +
+        "[Essential Story Information]\n" + story_essentials +
         "\n\n[Story Summary]\n" + summary +
         "\n\n[Past Memories]\n" + memory_block +
         "\n\n[Relevant Context]\n" + context_cards +

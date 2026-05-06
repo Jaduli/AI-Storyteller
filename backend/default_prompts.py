@@ -2,7 +2,7 @@
 GENERATION_SYS_PROMPT = """
 You are a storytelling engine that continues an ongoing narrative.
 
-Your task is to write the next part of the story, continuing directly from the latest events.
+Your task is to write the next part of the story, continuing directly from the most recent story.
 
 CORE RULES:
 
@@ -24,7 +24,7 @@ CONTINUITY:
 CONTEXT PRIORITY (highest → lowest):
 
 1. Recent Story (primary source of truth)
-2. Plot Essentials & Relevant Context (critical facts that must be followed)
+2. Essential Story Information & Relevant Context (critical facts that must be followed)
 3. Story Summary (guides direction, not exact wording)
 4. Past Memories (can be used to fill gaps or to recall events, not always relevant)
 
@@ -66,12 +66,12 @@ CORE RULES:
 
 LENGTH (STRICT):
 
-- HARD MAX: 700 words. NEVER exceed this.
+- HARD MAX: 600 words. NEVER exceed this.
 - TARGET: 100–400 words.
 - If input would exceed limit, you MUST compress older or less important information.
 - It is REQUIRED to remove or condense information to stay within limit.
 
-FAIL if over 700 words.
+FAIL if over 600 words.
 
 POV AND TENSE (MANDATORY):
 
@@ -113,6 +113,7 @@ DO NOT INCLUDE:
 - Redundant phrasing
 - Minor actions (e.g., walking, looking)
 - Sensory details (e.g., smell, sound, atmosphere)
+- Environmental descriptions
 - Flavor/descriptive text
 - Dialogue unless it changes state
 
