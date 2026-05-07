@@ -21,7 +21,7 @@ With Docker running, navigate to "AI-Storyteller" folder in your terminal and ru
 
 When running, the app can be accessed at http://localhost:5173/.
 
-If you have an NVIDIA GPU with at least 8 GB of VRAM and compatible drivers, you can run the app with a local AI for summary and memory actions (GPU mode). To use local AI, build and run the app with `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build`. Running the AI locally will reduce cloud API rate limits and cost. Local story continuation is not supported because competent storytelling should be done with a large (20B+ parameter) model. Smaller models struggle with consistency and creativity and have limited use cases.
+If you have an NVIDIA GPU with at least 8 GB of VRAM and compatible drivers, you can run the app with a local AI for summary and memory actions (GPU mode). To use local AI, build and run the app with `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build`. Running the AI locally will reduce cloud API rate limits and cost. Local story continuation is not supported as competent storytelling should be done with a large (20B+ parameter) model. Smaller models struggle with consistency and creativity and have limited use cases.
 
 NOTE! The full container takes about 25-35 GB to run, mainly due to Docker images and the local AI model (only installed on GPU mode). First time set up may take 20+ minutes to compose depending on selected mode and your internet connection.
 
@@ -32,7 +32,7 @@ https://console.groq.com/home
 API URL: https://api.groq.com/openai/v1/chat/completions
 Groq provides a free model: llama-3.1-8b-instant (rate limits apply, use less context, recommended only for testing purposes).
 
-Best price/quality AI, DeepSeek:
+Best quality/price AI, DeepSeek:
 https://platform.deepseek.com/
 API URL: https://api.deepseek.com/chat/completions
 Model name & Pricing can be found here:
