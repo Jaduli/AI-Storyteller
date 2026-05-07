@@ -110,7 +110,7 @@ def load_file():
 /save
 
 Save story to file. Valid filename and story_id are required. 
-Returns 400 if filename or story_id is missing,
+Returns 400 if filename or story_id is missing or invalid,
 413 (Payload Too Large) if file size exceeds set limit.
 """
 @app.route('/api/save', methods=['POST'])
@@ -341,7 +341,7 @@ def summarize():
             ],
             "options": {
                 "temperature": 0.2, # Low temperature for summary creation
-                "num_predict": 1000 # Token limit to prevent unnecessarily responses
+                "num_predict": 1000 # Token limit to prevent unnecessarily long responses
             },
             "stream": False
         })

@@ -10,7 +10,7 @@ export default {
   components: {
     ContextCards
   },
-  emits: ['tab-changed', 'loading-changed'],
+  emits: ['loading-changed'],
   props: {
     main_model: String,
     mem_model: String,
@@ -390,7 +390,8 @@ export default {
   computed: {
     // App state counts as loading if any active request is in process.
     // This disables continue, save, and load buttons to prevent multiple simultaneous 
-    // requests which could cause issues.
+    // requests which could cause issues. Also disables 'Set Limit' button in settings 
+    // menu when loading.
     isLoading() {
       return this.active_requests > 0;
     },
@@ -415,7 +416,7 @@ export default {
     },
     // Watch for changes in context_length to ensure that content isn't lost when changing 
     // context window size and that the story editor properly reflects the new context window.
-    async context_length(new_val, old_val) {
+    context_length(new_val, old_val) {
       // Prevent unnecessary triggers
       if (new_val === old_val) return;
 
