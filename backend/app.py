@@ -447,7 +447,7 @@ def memorize():
             tokens_total = response_data.get("prompt_eval_count", 0) + response_data.get("eval_count", 0)
 
         else:
-            return {"error": response.text}, response.status_code
+            return jsonify({"error": response.text}), response.status_code
     # Default to cloud
     else:
         if not api_url or not api_key:
